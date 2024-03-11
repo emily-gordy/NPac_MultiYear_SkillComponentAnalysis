@@ -1,7 +1,8 @@
 __pycache__/
 .ipynb_checkpoints/
 models/
-data/
-processed_data/
 .DS_Store
-
+LICENCE
+*.md
+*.nc
+*.npz
