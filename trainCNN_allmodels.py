@@ -51,7 +51,7 @@ testvariants = experiment_dict["testvariants"]
 trainvaltest = [trainvariants,valvariants,testvariants]
 
 datafile = "processed_data/" + filefront + ".npz"
-saveflag = True
+saveflag = False
 
 if saveflag:
     allinputdata,alloutputdata = preprocessing.make_inputoutput_modellist(experiment_dict)

@@ -194,7 +194,7 @@ def get_experiment_settings(experimentname):
             "filters": [16,16,8],
             "kernel_size": [5,5,5],
             "maxpools": [2,2,2],
-            "hiddens":[100],
+            "hiddens":[100,100],
             "ridgepen": 0.001,            
             "learning_rate": 0.5,
             "batch_size": 512,

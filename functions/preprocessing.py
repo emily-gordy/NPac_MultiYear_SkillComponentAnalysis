@@ -485,7 +485,7 @@ def PDO_pattern_allmodels(settings):
     if outbounds:
         da_EOF = da_EOF.sel(lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]))
     
-    PDOpattern = da_EOF
+    PDOpattern = np.asarray(da_EOF)
 
     return PDOpattern
 
@@ -586,7 +586,7 @@ def PDO_pattern_singlemodel(settings):
 
     PDOpatterns = xr.concat(PDOpatterns,dim="cmodel")
     
-    PDOpatterns = PDOpatterns.transpose("cmodel","lat","lon")
+    PDOpatterns = np.asarray(PDOpatterns.transpose("cmodel","lat","lon"))
     
     return PDOpatterns
 
