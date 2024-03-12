@@ -54,7 +54,8 @@ def patternplots_SST(bestpattern,PDOpattern,truedata,preddata,outputval,y_pred_v
     plt.figure(figsize=(18,9))
     
     a1=plt.subplot(2,3,1,projection=projection)
-    c1=a1.pcolormesh(lon,lat,bestpatternplot,vmin=-1,vmax=1,cmap="cmr.fusion_r",transform=transform)
+    a1.pcolormesh(lon,lat,bestpatternplot,vmin=-0.7,vmax=0.7,cmap="cmr.fusion_r",transform=transform)
+    c1=a1.contourf(lon,lat,bestpatternplot,np.arange(-0.7,0.75,0.05),cmap="cmr.fusion_r",transform=transform,extend='both')
     a1.add_feature(cfeature.NaturalEarthFeature('physical', 'land', '110m', edgecolor='face', facecolor=continents))
     cbar1=plt.colorbar(c1,location='bottom')
     cbar1.ax.set_xlabel(r'SST ($^{\circ}$C)')
@@ -79,7 +80,8 @@ def patternplots_SST(bestpattern,PDOpattern,truedata,preddata,outputval,y_pred_v
     plt.xlabel('year')
 
     a2=plt.subplot(2,3,4,projection=projection)
-    c2=a2.pcolormesh(lon,lat,PDOpatternplot,vmin=-1,vmax=1,cmap="cmr.fusion_r",transform=transform)
+    a2.pcolormesh(lon,lat,PDOpatternplot,vmin=-0.7,vmax=0.7,cmap="cmr.fusion_r",transform=transform)
+    c2=a2.contourf(lon,lat,PDOpatternplot,np.arange(-0.7,0.75,0.05),cmap="cmr.fusion_r",transform=transform,extend='both')
     a2.add_feature(cfeature.NaturalEarthFeature('physical', 'land', '110m', edgecolor='face', facecolor=continents))
     cbar2=plt.colorbar(c2,location='bottom')
     cbar2.ax.set_xlabel(r'SST ($^{\circ}$C)')
@@ -112,7 +114,8 @@ def plotpattern(pattern,lon,lat):
     plt.figure(figsize=(8,3))
 
     a1=plt.subplot(1,1,1,projection=ccrs.EqualEarth(central_longitude=180))
-    c1=a1.pcolormesh(lon,lat,pattern,vmin=-0.8,vmax=0.8,cmap=cmr.fusion_r,transform=ccrs.PlateCarree())
+    a1.pcolormesh(lon,lat,pattern,vmin=-0.8,vmax=0.8,cmap=cmr.fusion_r,transform=ccrs.PlateCarree())
+    c1=a1.contourf(lon,lat,pattern,np.arange(-0.8,0.85,0.05),cmap=cmr.fusion_r,transform=ccrs.PlateCarree())
     a1.coastlines()
     cbar=plt.colorbar(c1)
     cbar.ax.set_ylabel(r'SST ($\sigma$)')
@@ -171,10 +174,12 @@ def bestpatternplot_SST(bestpattern,truedata,preddata,outputval,y_pred_val,landm
     plt.tight_layout()
     plt.show()    
 
-def prettyscatterplot(modeldata,obsval,modellist,testvariants,ylabel):
+def prettyscatterplot(modeldata,obsval,modellist,testvariants,ylabel,obslabels):
     
     nmodels = len(modellist)
-    plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.Paired(np.linspace(0,1,nmodels)))
+    plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.tab10(np.linspace(0,1,nmodels)))
+
+    colorlist = ["xkcd:teal","xkcd:salmon"]
     
     lowerbound = np.min(modeldata,axis=1)
     upperbound = np.max(modeldata,axis=1)
@@ -190,9 +195,11 @@ def prettyscatterplot(modeldata,obsval,modellist,testvariants,ylabel):
     for i in range(nmodels):
         xvec = i*np.ones(len(testvariants))
         plt.scatter(xvec,modeldata[i,:])
-    plt.hlines(obsval,0,nmodels-1,color='xkcd:teal')
+    for iline in range(len(obsval)):
+        plt.hlines(obsval[iline],0,nmodels-1,color=colorlist[iline],label=obslabels[iline])
     plt.xticks(np.arange(nmodels),labels=modellist,rotation=90)
     plt.ylabel(ylabel)
+    plt.legend()
     
     plt.tight_layout()
     plt.show()
@@ -239,7 +246,7 @@ def inputplots(inputdata,outputdata,bestpattern,landmask,inres,titlestr):
 
     for iplot in range(2):
 
-        title = titlestr + r" $\tau$=" + str(5*(iplot-2)) + " to " + str(5*(iplot-1))
+        title = titlestr + r" $\tau$=" + str(5*(iplot-2)) + " to " + str(5*(iplot-1)) + " years"
         
         plotdata = np.mean(SCtimeseries[:,np.newaxis,np.newaxis]*inputdata[:,:,:,iplot],axis=0)
 
@@ -250,7 +257,7 @@ def inputplots(inputdata,outputdata,bestpattern,landmask,inres,titlestr):
 
     cax = plt.axes((0.92,0.2,0.015,0.6))
     cbar = plt.colorbar(c1,cax=cax)
-    cbar.ax.set_ylabel(r'anomaly $\sigma$')
+    cbar.ax.set_ylabel(r'SST anomaly ($^{\circ}$C)')
 
     #plt.tight_layout()
     plt.show()

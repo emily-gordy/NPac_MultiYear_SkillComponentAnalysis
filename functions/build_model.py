@@ -71,14 +71,24 @@ def build_CNN_full(inputdata,outputdata,settings,random_seed):
 
     if len(outputdata.shape)>1:
         x = tf.keras.layers.Dense(outputshape_flat, activation="linear",
-                        bias_initializer=tf.keras.initializers.RandomNormal(seed=random_seed),
-                        kernel_initializer=tf.keras.initializers.RandomNormal(seed=random_seed))(x)
+                        bias_initializer=tf.keras.initializers.Zeros(),
+                        kernel_initializer=tf.keras.initializers.Zeros())(x)
         outputs = tf.keras.layers.Reshape(outputshape)(x)
     else:
         outputs = tf.keras.layers.Dense(outputshape_flat, activation="linear",
-                        bias_initializer=tf.keras.initializers.RandomNormal(seed=random_seed),
-                        kernel_initializer=tf.keras.initializers.RandomNormal(seed=random_seed))(x)
+                        bias_initializer=tf.keras.initializers.Zeros(),
+                        kernel_initializer=tf.keras.initializers.Zeros())(x)
         
+    # if len(outputdata.shape)>1:
+    #     x = tf.keras.layers.Dense(outputshape_flat, activation="linear",
+    #                     bias_initializer=tf.keras.initializers.RandomNormal(seed=random_seed),
+    #                     kernel_initializer=tf.keras.initializers.RandomNormal(seed=random_seed))(x)
+    #     outputs = tf.keras.layers.Reshape(outputshape)(x)
+    # else:
+    #     outputs = tf.keras.layers.Dense(outputshape_flat, activation="linear",
+    #                     bias_initializer=tf.keras.initializers.RandomNormal(seed=random_seed),
+    #                     kernel_initializer=tf.keras.initializers.RandomNormal(seed=random_seed))(x)
+    
     CNNmodel = tf.keras.Model(inputs=inputs,outputs=outputs,name='EmilysCNN')
     
     return CNNmodel

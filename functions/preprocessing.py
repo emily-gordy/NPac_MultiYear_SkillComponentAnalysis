@@ -57,15 +57,17 @@ def pull_data_obs(var,source):
         
         ds = xr.open_dataset(file)
         da = ds["sst"]
+        
     elif source == "HadISST":
     
         filelist = glob.glob(path + "*" + source + "*2x2*.nc")
         file = filelist[0]
+        print(file)
         
         ds = xr.open_dataset(file)
         da = ds["sst"]
     
-    polys = da.polyfit(dim="time",deg=2)    
+    polys = da.polyfit(dim="time",deg=3)    
     coordout = da.time
     trend = xr.polyval(coord=coordout, coeffs=polys.polyfit_coefficients)
     
@@ -215,7 +217,7 @@ def concatobs(inputobs,outputobs,outputstd,run):
     inputobs = np.asarray(inputobs)
     outputobs = np.asarray(outputobs)
     
-    inputobs[:,np.isnan(np.mean(inputobs,axis=0))] = 0
+    inputobs[np.isnan(inputobs)] = 0
     inputobs1 = inputobs[:-1*run,:,:]
     inputobs2 = inputobs[run:,:,:]
     inputobs = np.concatenate((inputobs1[:,:,:,np.newaxis],inputobs2[:,:,:,np.newaxis]),axis=3)

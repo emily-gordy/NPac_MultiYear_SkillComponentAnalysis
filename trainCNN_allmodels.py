@@ -39,7 +39,7 @@ plt.rcParams.update(params)
 # %% load and preprocess data
 
 modelpath = "models/"
-experiment_name = "allcmodel-tos_allcmodel-tos_2-9yearlead"
+experiment_name = "allcmodel-tos_allcmodel-tos_1-5yearlead"
 experiment_dict = experiment_settings.get_experiment_settings(experiment_name)
 
 filefront = experiment_dict["filename"]
@@ -116,7 +116,7 @@ def weightedMSE(weights):
     return MSE
 
 def scheduler(epoch, lr):
-  if epoch < 20:
+  if epoch < 10:
     return lr
   else:
     return lr * tf.math.exp(-0.1)
