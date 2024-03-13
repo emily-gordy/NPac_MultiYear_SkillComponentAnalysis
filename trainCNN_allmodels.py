@@ -39,7 +39,7 @@ plt.rcParams.update(params)
 # %% load and preprocess data
 
 modelpath = "models/"
-experiment_name = "allcmodel-tos_allcmodel-tos_1-5yearlead"
+experiment_name = "allcmodel-tos_allcmodel-tos_1-3yearlead"
 experiment_dict = experiment_settings.get_experiment_settings(experiment_name)
 
 filefront = experiment_dict["filename"]

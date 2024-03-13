@@ -67,7 +67,7 @@ def pull_data_obs(var,source):
         ds = xr.open_dataset(file)
         da = ds["sst"]
     
-    polys = da.polyfit(dim="time",deg=3)    
+    polys = da.polyfit(dim="time",deg=2)    
     coordout = da.time
     trend = xr.polyval(coord=coordout, coeffs=polys.polyfit_coefficients)
     
