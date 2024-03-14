@@ -54,8 +54,8 @@ def patternplots_SST(bestpattern,PDOpattern,truedata,preddata,outputval,y_pred_v
     plt.figure(figsize=(18,9))
     
     a1=plt.subplot(2,3,1,projection=projection)
-    a1.pcolormesh(lon,lat,bestpatternplot,vmin=-0.7,vmax=0.7,cmap="cmr.fusion_r",transform=transform)
-    c1=a1.contourf(lon,lat,bestpatternplot,np.arange(-0.7,0.75,0.05),cmap="cmr.fusion_r",transform=transform,extend='both')
+    a1.pcolormesh(lon,lat,bestpatternplot,vmin=-0.6,vmax=0.6,cmap="cmr.fusion_r",transform=transform)
+    c1=a1.contourf(lon,lat,bestpatternplot,np.arange(-0.6,0.65,0.05),cmap="cmr.fusion_r",transform=transform,extend='both')
     a1.add_feature(cfeature.NaturalEarthFeature('physical', 'land', '110m', edgecolor='face', facecolor=continents))
     cbar1=plt.colorbar(c1,location='bottom')
     cbar1.ax.set_xlabel(r'SST ($^{\circ}$C)')
@@ -80,8 +80,8 @@ def patternplots_SST(bestpattern,PDOpattern,truedata,preddata,outputval,y_pred_v
     plt.xlabel('year')
 
     a2=plt.subplot(2,3,4,projection=projection)
-    a2.pcolormesh(lon,lat,PDOpatternplot,vmin=-0.7,vmax=0.7,cmap="cmr.fusion_r",transform=transform)
-    c2=a2.contourf(lon,lat,PDOpatternplot,np.arange(-0.7,0.75,0.05),cmap="cmr.fusion_r",transform=transform,extend='both')
+    a2.pcolormesh(lon,lat,PDOpatternplot,vmin=-0.6,vmax=0.6,cmap="cmr.fusion_r",transform=transform)
+    c2=a2.contourf(lon,lat,PDOpatternplot,np.arange(-0.6,0.65,0.05),cmap="cmr.fusion_r",transform=transform,extend='both')
     a2.add_feature(cfeature.NaturalEarthFeature('physical', 'land', '110m', edgecolor='face', facecolor=continents))
     cbar2=plt.colorbar(c2,location='bottom')
     cbar2.ax.set_xlabel(r'SST ($^{\circ}$C)')
@@ -122,7 +122,33 @@ def plotpattern(pattern,lon,lat):
     
     plt.tight_layout()
     plt.show()
+
+def plotpattern_SST(pattern,lon,lat,outputstd):
+
+    lbound = -0.3
+    ubound = 0.3
     
+    cmapdiff = cmr.fusion_r
+    boundsdiff = np.arange(lbound,ubound+0.02,0.02)
+    normdiff = colors.BoundaryNorm(boundaries=boundsdiff, ncolors=cmapdiff.N)
+    
+    pattern = np.squeeze(pattern*outputstd)
+    
+    plt.figure(figsize=(8,3))
+
+    a1=plt.subplot(1,1,1,projection=ccrs.EqualEarth(central_longitude=180))
+    a1.pcolormesh(lon,lat,pattern,norm=normdiff,cmap=cmapdiff,transform=ccrs.PlateCarree())
+    c1=a1.contourf(lon,lat,pattern,boundsdiff,cmap=cmr.fusion_r,transform=ccrs.PlateCarree())
+    a1.coastlines()
+    cbar=plt.colorbar(c1)
+    cbar.ax.set_ylabel(r'SST ($^{\circ}$C)')
+    cbar.ax.set_yticks(np.arange(lbound,ubound+0.1,0.1))
+    
+    plt.tight_layout()
+
+    plt.savefig("figures/CMIP6pattern.png",dpi=300)
+    
+    plt.show()
     
 def bestpatternplot_SST(bestpattern,truedata,preddata,outputval,y_pred_val,landmask,lon,lat,yearvec,title,outputstd):
     
@@ -179,7 +205,7 @@ def prettyscatterplot(modeldata,obsval,modellist,testvariants,ylabel,obslabels):
     nmodels = len(modellist)
     plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.tab10(np.linspace(0,1,nmodels)))
 
-    colorlist = ["xkcd:teal","xkcd:salmon"]
+    colorlist = ["xkcd:teal","xkcd:golden rod"]
     
     lowerbound = np.min(modeldata,axis=1)
     upperbound = np.max(modeldata,axis=1)
@@ -191,7 +217,7 @@ def prettyscatterplot(modeldata,obsval,modellist,testvariants,ylabel,obslabels):
     
     plt.figure(figsize=(10,4))
 
-    plt.errorbar(np.arange(nmodels),np.mean(modeldata,axis=1),errs,ls='none',color='xkcd:crimson')
+    plt.errorbar(np.arange(nmodels),np.mean(modeldata,axis=1),errs,ls='none',color='xkcd:slate')
     for i in range(nmodels):
         xvec = i*np.ones(len(testvariants))
         plt.scatter(xvec,modeldata[i,:])
@@ -199,12 +225,12 @@ def prettyscatterplot(modeldata,obsval,modellist,testvariants,ylabel,obslabels):
         plt.hlines(obsval[iline],0,nmodels-1,color=colorlist[iline],label=obslabels[iline])
     plt.xticks(np.arange(nmodels),labels=modellist,rotation=90)
     plt.ylabel(ylabel)
-    plt.legend()
+    plt.legend(loc='lower left')
     
     plt.tight_layout()
     plt.show()
 
-def prettyscatterplot_multiobs(modeldata,obsval,modellist,testvariants,ylabel):
+def prettyscatterplot_multiobs(modeldata,obsval,modellist,testvariants,ylabel,source):
 
     nmodels = len(modellist)
     plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.tab10(np.linspace(0,1,nmodels)))
@@ -224,7 +250,9 @@ def prettyscatterplot_multiobs(modeldata,obsval,modellist,testvariants,ylabel):
         xvec = i*np.ones(len(testvariants))
         plt.scatter(xvec,modeldata[i,:],zorder=i+1)
 
-    plt.scatter(np.arange(nmodels),obsval,marker='x',color='xkcd:dark teal',zorder=nmodels+1)
+    plt.scatter(np.arange(nmodels),obsval,marker='x',color='xkcd:dark teal',zorder=nmodels+1,label=source)
+
+    plt.legend()
     
     plt.xticks(np.arange(nmodels),labels=modellist,rotation=90)
     plt.ylabel(ylabel)

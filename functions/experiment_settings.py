@@ -228,6 +228,49 @@ def get_experiment_settings(experimentname):
     
         }, 
         
+        "allcmodel-tos_allcmodel-tos_1-5yearlead_keepone": {
+            "filename": "allcmodel-tos_allcmodel-tos_1-5yearlead_keepone",
+            "leadtime": 0,
+            "run": 5,
+            "varin": "tos",
+            "varout": "tos",
+            "filters": [16,16,8],
+            "kernel_size": [5,5,5],
+            "maxpools": [2,2,2],
+            "hiddens":[10],
+            "ridgepen": 0.001,            
+            "learning_rate": 0.1,
+            "batch_size": 32,
+            "n_epochs": 50,
+            "patience": 10,
+            "dropout_rate": 0.2,
+            "seeds": [
+                    4487873,
+                    5487191,
+                    5974863,
+                    ],
+            "activation":"relu",
+            "modellist":[
+                "ACCESS-ESM1-5",
+                "CanESM5",
+                "CESM2",
+                "CNRM-CM6-1",
+                "IPSL-CM6A-LR",
+                "MIROC-ES2L",
+                "MIROC6",
+                "MPI-ESM1-2-LR",
+                "NorCPM1",
+                ],
+            "inbounds": [],
+            "outbounds": [20,60,110,260],
+            "inres": 4,
+            "outres": 4,
+            "trainvariants": np.arange(15),
+            "valvariants": np.arange(15,23),
+            "testvariants": np.arange(23,30),
+    
+        },
+        
     }
     
     return experiment_dict[experimentname]
