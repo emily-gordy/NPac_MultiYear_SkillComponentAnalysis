@@ -59,7 +59,7 @@ def build_CNN_full(inputdata,outputdata,settings,random_seed):
                 kernel_initializer=tf.keras.initializers.RandomNormal(seed=random_seed),
                 kernel_regularizer=tf.keras.regularizers.L2(l2=settings["ridgepen"]))(x)
     x = tf.keras.layers.BatchNormalization()(x)
-    x = tf.keras.layers.Dropout(dropout_rate,name='d2')(x,training=True)
+    x = tf.keras.layers.Dropout(dropout_rate,name='d2')(x)
 
     for layer in range(1,n_layers):
         x = tf.keras.layers.Dense(hiddens[layer], activation=activation,
@@ -67,7 +67,7 @@ def build_CNN_full(inputdata,outputdata,settings,random_seed):
                         # bias_initializer=tf.keras.initializers.RandomNormal(seed=random_seed),
                         kernel_initializer=tf.keras.initializers.RandomNormal(seed=random_seed))(x)
         x = tf.keras.layers.BatchNormalization()(x)
-        x = tf.keras.layers.Dropout(dropout_rate,name='d_dense'+str(layer))(x,training=True)
+        x = tf.keras.layers.Dropout(dropout_rate,name='d_dense'+str(layer))(x)
 
     if len(outputdata.shape)>1:
         x = tf.keras.layers.Dense(outputshape_flat, activation="linear",
