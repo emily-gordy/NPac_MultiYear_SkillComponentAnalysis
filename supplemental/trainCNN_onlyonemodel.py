@@ -145,7 +145,6 @@ modellist = experiment_dict["modellist"]
 outbounds = experiment_dict["outbounds"]
 
 lon, lat = preprocessing.outlonxlat(experiment_dict)
-nvars = int(len(valvariants)*(len(modellist)-1))
 
 centre = (outbounds[2]+outbounds[3])/2
 latweights = np.sqrt(np.cos(np.deg2rad(np.meshgrid(lon,lat)[1])))
@@ -158,9 +157,9 @@ lr_callback = tf.keras.callbacks.LearningRateScheduler(
 es_callback = tf.keras.callbacks.EarlyStopping(
     monitor='val_loss', patience=patience, restore_best_weights=True)  # early stopping
 
-nvariant = len(valvariants)
+nvars = len(valvariants)
 nmodels = len(modellist)
-ntimesteps = int(len(outputval)/(nvariant*nmodels))
+ntimesteps = int(len(outputval)/(nvars*nmodels))
 
 landmask = (np.mean(outputval,axis=0))!=0
 

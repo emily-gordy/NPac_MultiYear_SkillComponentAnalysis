@@ -31,7 +31,7 @@ def calculate_SC(y_pred_val,outputval,landmask):
     
     evecsel = evecs[:,bestinds[ivec]]
     
-    if evecsel[0]<0:
+    if np.nansum(evecsel)<0:
         evecsel = -1*evecsel
     truecomponent = (1/len(evecsel))*np.matmul(evecsel,np.transpose(verrectangle))
     #standardize component

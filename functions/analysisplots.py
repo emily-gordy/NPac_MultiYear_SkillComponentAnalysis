@@ -51,7 +51,7 @@ def patternplots_SST(bestpattern,PDOpattern,truedata,preddata,outputval,y_pred_v
     cc_SC,_ = pearsonr(SC_index_true,SC_index_pred)
     cc_PDO,_ = pearsonr(PDOindex_true,PDOindex_pred)
     
-    plt.figure(figsize=(18,9))
+    plt.figure(figsize=(19,9))
     
     a1=plt.subplot(2,3,1,projection=projection)
     a1.pcolormesh(lon,lat,bestpatternplot,vmin=-0.6,vmax=0.6,cmap="cmr.fusion_r",transform=transform)
@@ -59,24 +59,25 @@ def patternplots_SST(bestpattern,PDOpattern,truedata,preddata,outputval,y_pred_v
     a1.add_feature(cfeature.NaturalEarthFeature('physical', 'land', '110m', edgecolor='face', facecolor=continents))
     cbar1=plt.colorbar(c1,location='bottom')
     cbar1.ax.set_xlabel(r'SST ($^{\circ}$C)')
-    plt.title('SC pattern')
+    plt.title('PPDV pattern')
     
     plt.subplot(2,3,2)
-    plt.scatter(SC_index_true,SC_index_pred,c=yearvec,cmap='magma')
+    c=plt.scatter(SC_index_true,SC_index_pred,c=yearvec,cmap=cmr.ember)
     plt.plot(np.arange(-2,3),np.arange(-2,3),color='xkcd:teal')
     plt.text(-2.5,2,"r = %.4f" %(cc_SC))
-    plt.xlabel('true SC')
-    plt.ylabel('pred SC')
+    plt.xlabel('true PPDV')
+    plt.ylabel('pred PPDV')
     plt.xlim(-3,3)
     plt.ylim(-3,3)
+    plt.colorbar(c)
 
     plt.subplot(2,3,3)
     plt.plot(yearvec,SC_index_true,color='xkcd:teal',label='true')
     plt.plot(yearvec,SC_index_pred,color='xkcd:golden rod',label='pred')
     plt.ylim(-3,3)
-    plt.xlim(1865,2022)
+    plt.xlim(yearvec[0],yearvec[-1])
     plt.legend()
-    plt.ylabel('SC index')
+    plt.ylabel('PPDV index')
     plt.xlabel('year')
 
     a2=plt.subplot(2,3,4,projection=projection)
@@ -88,14 +89,15 @@ def patternplots_SST(bestpattern,PDOpattern,truedata,preddata,outputval,y_pred_v
     plt.title('PDO pattern')
     
     plt.subplot(2,3,5)
-    plt.scatter(PDOindex_true,PDOindex_pred,c=yearvec,cmap='magma')
+    c=plt.scatter(PDOindex_true,PDOindex_pred,c=yearvec,cmap=cmr.ember)
     plt.plot(np.arange(-2,3),np.arange(-2,3),color='xkcd:teal')
     plt.xlabel('true PDO')
     plt.ylabel('pred PDO')
     plt.text(-2.5,2,"r = %.4f" %(cc_PDO))
     plt.xlim(-3,3)
     plt.ylim(-3,3)
-
+    plt.colorbar(c)
+    
     plt.subplot(2,3,6)
     plt.plot(yearvec,PDOindex_true,color='xkcd:teal',label='true')
     plt.plot(yearvec,PDOindex_pred,color='xkcd:golden rod',label='pred')
@@ -103,11 +105,14 @@ def patternplots_SST(bestpattern,PDOpattern,truedata,preddata,outputval,y_pred_v
     plt.ylabel('PDO index')
     plt.xlabel('year')
     plt.ylim(-3,3)
-    plt.xlim(1865,2022)
+    plt.xlim(yearvec[0],yearvec[-1])
     
     plt.suptitle(title,fontsize=30)
 
-    plt.tight_layout()
+    plt.tight_layout
+
+    plt.savefig("figures/" +title+"_patternscatterline.png",dpi=300)
+    
     plt.show()
     
 def plotpattern(pattern,lon,lat):
@@ -200,7 +205,7 @@ def bestpatternplot_SST(bestpattern,truedata,preddata,outputval,y_pred_val,landm
     plt.tight_layout()
     plt.show()    
 
-def prettyscatterplot(modeldata,obsval,modellist,testvariants,ylabel,obslabels):
+def prettyscatterplot(modeldata,obsval,modellist,testvariants,ylabel,obslabels,savestr):
     
     nmodels = len(modellist)
     plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.tab10(np.linspace(0,1,nmodels)))
@@ -223,14 +228,16 @@ def prettyscatterplot(modeldata,obsval,modellist,testvariants,ylabel,obslabels):
         plt.scatter(xvec,modeldata[i,:])
     for iline in range(len(obsval)):
         plt.hlines(obsval[iline],0,nmodels-1,color=colorlist[iline],label=obslabels[iline])
-    plt.xticks(np.arange(nmodels),labels=modellist,rotation=90)
+    plt.xticks(np.arange(nmodels),labels=modellist,rotation=60)
     plt.ylabel(ylabel)
     plt.legend(loc='lower left')
     
     plt.tight_layout()
+
+    plt.savefig(savestr,dpi=300)
     plt.show()
 
-def prettyscatterplot_multiobs(modeldata,obsval,modellist,testvariants,ylabel,source):
+def prettyscatterplot_multiobs(modeldata,obsval,modellist,testvariants,ylabel,source,savestr):
 
     nmodels = len(modellist)
     plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.tab10(np.linspace(0,1,nmodels)))
@@ -242,6 +249,9 @@ def prettyscatterplot_multiobs(modeldata,obsval,modellist,testvariants,ylabel,so
     uppers = upperbound-np.mean(modeldata,axis=1)
     
     errs = np.concatenate((lowers[np.newaxis,:],uppers[np.newaxis,:]),axis=0)
+
+    colors = ["xkcd:dark teal",
+             "xkcd:dark gold"]
     
     plt.figure(figsize=(10,4))
 
@@ -249,15 +259,17 @@ def prettyscatterplot_multiobs(modeldata,obsval,modellist,testvariants,ylabel,so
     for i in range(nmodels):
         xvec = i*np.ones(len(testvariants))
         plt.scatter(xvec,modeldata[i,:],zorder=i+1)
-
-    plt.scatter(np.arange(nmodels),obsval,marker='x',color='xkcd:dark teal',zorder=nmodels+1,label=source)
+    for iobs,obs in enumerate(obsval):
+        plt.scatter(np.arange(nmodels),obs,marker='x',color=colors[iobs],zorder=nmodels+1,label=source[iobs])
 
     plt.legend()
     
-    plt.xticks(np.arange(nmodels),labels=modellist,rotation=90)
+    plt.xticks(np.arange(nmodels),labels=modellist,rotation=60)
     plt.ylabel(ylabel)
     
     plt.tight_layout()
+
+    plt.savefig(savestr,dpi=300)
     plt.show()
 
 def inputplots(inputdata,outputdata,bestpattern,landmask,inres,titlestr):
