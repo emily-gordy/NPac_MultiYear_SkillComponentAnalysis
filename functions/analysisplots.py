@@ -59,6 +59,7 @@ def patternplots_SST(bestpattern,PDOpattern,truedata,preddata,outputval,y_pred_v
     a1.add_feature(cfeature.NaturalEarthFeature('physical', 'land', '110m', edgecolor='face', facecolor=continents))
     cbar1=plt.colorbar(c1,location='bottom')
     cbar1.ax.set_xlabel(r'SST ($^{\circ}$C)')
+    cbar1.ax.set_xticks(np.arange(-0.6,0.8,0.2))
     plt.title('PPDV pattern')
     
     plt.subplot(2,3,2)
@@ -69,8 +70,9 @@ def patternplots_SST(bestpattern,PDOpattern,truedata,preddata,outputval,y_pred_v
     plt.ylabel('pred PPDV')
     plt.xlim(-3,3)
     plt.ylim(-3,3)
-    plt.colorbar(c)
-
+    cbarscat1=plt.colorbar(c)
+    cbarscat1.ax.set_ylabel('year')
+    
     plt.subplot(2,3,3)
     plt.plot(yearvec,SC_index_true,color='xkcd:teal',label='true')
     plt.plot(yearvec,SC_index_pred,color='xkcd:golden rod',label='pred')
@@ -86,6 +88,7 @@ def patternplots_SST(bestpattern,PDOpattern,truedata,preddata,outputval,y_pred_v
     a2.add_feature(cfeature.NaturalEarthFeature('physical', 'land', '110m', edgecolor='face', facecolor=continents))
     cbar2=plt.colorbar(c2,location='bottom')
     cbar2.ax.set_xlabel(r'SST ($^{\circ}$C)')
+    cbar2.ax.set_xticks(np.arange(-0.6,0.8,0.2))
     plt.title('PDO pattern')
     
     plt.subplot(2,3,5)
@@ -96,7 +99,8 @@ def patternplots_SST(bestpattern,PDOpattern,truedata,preddata,outputval,y_pred_v
     plt.text(-2.5,2,"r = %.4f" %(cc_PDO))
     plt.xlim(-3,3)
     plt.ylim(-3,3)
-    plt.colorbar(c)
+    cbarscat2=plt.colorbar(c)
+    cbarscat2.ax.set_ylabel('year')
     
     plt.subplot(2,3,6)
     plt.plot(yearvec,PDOindex_true,color='xkcd:teal',label='true')
