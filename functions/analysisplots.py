@@ -235,6 +235,7 @@ def prettyscatterplot(modeldata,obsval,modellist,testvariants,ylabel,obslabels,s
     plt.xticks(np.arange(nmodels),labels=modellist,rotation=60)
     plt.ylabel(ylabel)
     plt.legend(loc='lower left')
+    plt.ylim(-0.2,1)
     
     plt.tight_layout()
 
@@ -270,6 +271,7 @@ def prettyscatterplot_multiobs(modeldata,obsval,modellist,testvariants,ylabel,so
     
     plt.xticks(np.arange(nmodels),labels=modellist,rotation=60)
     plt.ylabel(ylabel)
+    plt.ylim(-0.2,1)
     
     plt.tight_layout()
 

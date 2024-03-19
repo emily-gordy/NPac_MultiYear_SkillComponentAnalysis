@@ -96,27 +96,6 @@ def scheduler(epoch, lr):
   else:
     return lr * tf.math.exp(-0.1)
 
-# def reshapengrab(mat,imodel,nvariants):
-    
-#     inputshape = mat.shape
-#     ntimesteps = int(inputshape[0]/(nvariants*nmodels))
-#     if len(inputshape) == 3:        
-#         matreshape = np.reshape(mat,(nmodels,nvariants,ntimesteps,inputshape[1],inputshape[2]))
-#     else:
-#         matreshape = np.reshape(mat,(nmodels,nvariants,ntimesteps,inputshape[1],inputshape[2],inputshape[3]))
-    
-#     allinds = np.arange(nmodels)
-#     loopinds = allinds[allinds!=imodel]
-    
-#     matgrab = matreshape[loopinds]
-#     if len(inputshape) == 3:
-#         shapeout = (ntimesteps*(nmodels-1)*nvariants,inputshape[1],inputshape[2])
-#     else:
-#         shapeout = (ntimesteps*(nmodels-1)*nvariants,inputshape[1],inputshape[2],inputshape[3])
-#     matout = np.reshape(matgrab,shapeout)    
-
-#     return matout
-
 def reshapengrab(mat,imodel,nvariants):
     
     inputshape = mat.shape
