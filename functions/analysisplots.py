@@ -115,7 +115,7 @@ def patternplots_SST(bestpattern,PDOpattern,truedata,preddata,outputval,y_pred_v
 
     plt.tight_layout
 
-    plt.savefig("figures/" +title+"_patternscatterline.png",dpi=300)
+    #plt.savefig("figures/" +title+"_patternscatterline.png",dpi=300)
     
     plt.show()
     
@@ -155,7 +155,7 @@ def plotpattern_SST(pattern,lon,lat,outputstd):
     
     plt.tight_layout()
 
-    plt.savefig("figures/CMIP6pattern.png",dpi=300)
+    #plt.savefig("figures/CMIP6pattern.png",dpi=300)
     
     plt.show()
     
@@ -238,8 +238,8 @@ def prettyscatterplot(modeldata,obsval,modellist,testvariants,ylabel,obslabels,s
     plt.ylim(-0.2,1)
     
     plt.tight_layout()
-
-    plt.savefig(savestr,dpi=300)
+    if savestr:
+        plt.savefig(savestr,dpi=300)
     plt.show()
 
 def prettyscatterplot_multiobs(modeldata,obsval,modellist,testvariants,ylabel,source,savestr):

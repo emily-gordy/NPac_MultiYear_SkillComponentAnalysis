@@ -210,10 +210,3 @@ for imodel,cmodel in enumerate(modellist):
         y_pred = full_model.predict(inputval_short)
         
         metricplots.mapmetrics(y_pred, outputval_short, nvars, lon, lat, centre, title, experiment_dict)
-            
-        bestpattern = allthelinalg.calculate_SC(y_pred,outputval_short,landmask)  
-        analysisplots.plotpattern(bestpattern,lon,lat)
-
-
-
-

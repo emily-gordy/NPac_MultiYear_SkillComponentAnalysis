@@ -37,14 +37,14 @@ def build_CNN_full(inputdata,outputdata,settings,random_seed):
     # add convolutions    
     x=tf.keras.layers.Conv2D(filters[0], kernel_size[0], activation=activation,
                               kernel_initializer=tf.keras.initializers.RandomNormal(seed=random_seed))(inputs)
-    # x=tf.keras.layers.MaxPooling2D((maxpools[0], maxpools[0]))(x)
-    x=tf.keras.layers.MaxPooling2D((maxpools[0], maxpools[0]))(x)
+    x=tf.keras.layers.AveragePooling2D((maxpools[0], maxpools[0]))(x)
     x=tf.keras.layers.BatchNormalization()(x)
     
     for conv in range(1,n_convs):
         x=tf.keras.layers.Conv2D(filters[conv], kernel_size[conv], activation='relu',
                                   kernel_initializer=tf.keras.initializers.RandomNormal(seed=random_seed))(x)
-        x=tf.keras.layers.MaxPooling2D((maxpools[conv], maxpools[conv]))(x)
+        x=tf.keras.layers.AveragePooling2D((maxpools[conv], maxpools[conv]))(x)
+        
         x=tf.keras.layers.BatchNormalization()(x)
     
     

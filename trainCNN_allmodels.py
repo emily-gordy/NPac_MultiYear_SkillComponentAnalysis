@@ -39,7 +39,7 @@ plt.rcParams.update(params)
 # %% load and preprocess data
 
 modelpath = "models/"
-experiment_name = "allcmodel-tos_allcmodel-tos_1-3yearlead"
+experiment_name = "allcmodel-tos_allcmodel-tos_1-5yearlead"
 experiment_dict = experiment_settings.get_experiment_settings(experiment_name)
 
 filefront = experiment_dict["filename"]
@@ -116,7 +116,7 @@ def weightedMSE(weights):
     return MSE
 
 def scheduler(epoch, lr):
-  if epoch < 10:
+  if epoch < 30:
     return lr
   else:
     return lr * tf.math.exp(-0.1)
@@ -204,9 +204,6 @@ for random_seed in seedlist:
                               outputval[nvariant*ntimesteps*(imodel):nvariant*ntimesteps*(imodel+1)],
                               nvariant, lon, lat, centre, cmodel, experiment_dict)
         
-    bestpattern = allthelinalg.calculate_SC(y_pred,outputval,landmask)  
-    analysisplots.plotpattern(bestpattern,lon,lat)
-
 
 
 
