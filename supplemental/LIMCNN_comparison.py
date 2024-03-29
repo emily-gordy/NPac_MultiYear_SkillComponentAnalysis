@@ -110,7 +110,7 @@ inputobs_HadISST,outputobs_HadISST = preprocessing.concatobs(inputobs_HadISST,ou
 
 #%% LIM functions
 
-def LIM_getG(data,tau,dims,landmask):
+def LIM_getG(data,tau,dims,landmask,weights):
 
     data = np.reshape(data,dims) # reshape to time dimension
     
@@ -288,18 +288,21 @@ def patternplots_SST(bestpattern,PDOpattern,truedata,preddata,outputval,y_pred_v
 
 tau = 5
 
+weights = np.meshgrid(lon,lat)[1]
+latweights = np.sqrt(np.cos(np.deg2rad(weights)))
+
 bigdatashape = alloutputdata.shape
 
 traindims = get_partial_dims(alloutputdata,trainvariants)
 valdims = get_partial_dims(alloutputdata,valvariants)
 testdims = get_partial_dims(alloutputdata,testvariants)
 
-G = LIM_getG(outputdata,tau,traindims,landmask)
+G = LIM_getG(outputdata,tau,traindims,landmask,weights)
 
 y_pred_val,outputval_tau = LIM_cmodel(outputval,tau,valdims,landmask,G)
 y_pred_test_LIM,outputtest_tau = LIM_cmodel(outputtest,tau,testdims,landmask,G)
 
-# r_test_LIM,mse_test_LIM = metricplots.metrics(y_pred_test_LIM,outputtest_tau)
+r_test_LIM,mse_test_LIM = metricplots.metrics(y_pred_test_LIM,outputtest_tau)
 
 nmode = get_normalmodes(G)
 
@@ -315,11 +318,11 @@ nmode_pred_HadISST = allthelinalg.index_timeseries(y_pred_obs_HadISST,nmode,land
 r_LIM_ERSST,_ = pearsonr(nmode_true_ERSST,nmode_pred_ERSST)
 r_LIM_HadISST,_ = pearsonr(nmode_true_HadISST,nmode_pred_HadISST)
 
-r_test_LIM,mse_test_LIM = metricplots.metrics(y_pred_obs_ERSST,outputobs_ERSST_tau)
+# r_test_LIM,mse_test_LIM = metricplots.metrics(y_pred_obs_ERSST,outputobs_ERSST_tau)
 
 #%%
 
-random_seed = seedlist[0]
+random_seed = seedlist[3]
 
 fileout = filename + "_seed=" + str(random_seed) +".h5"
 
@@ -340,14 +343,14 @@ full_model.trainable = False # freeze BN
 y_pred_val = full_model.predict(inputval) 
 y_pred_test_CNN = full_model.predict(inputtest)
 
-# r_test_CNN,mse_test_CNN = metricplots.metrics(y_pred_test_CNN,outputtest)
+r_test_CNN,mse_test_CNN = metricplots.metrics(y_pred_test_CNN,outputtest)
 
 y_pred_CNN_ERSST = full_model.predict(inputobs_ERSST)
 y_pred_CNN_HadISST = full_model.predict(inputobs_HadISST)
 
 bestpattern = allthelinalg.calculate_SC(y_pred_val,outputval,landmask)   
 
-r_test_CNN,mse_test_CNN = metricplots.metrics(y_pred_CNN_ERSST,outputobs_ERSST)
+# r_test_CNN,mse_test_CNN = metricplots.metrics(y_pred_CNN_ERSST,outputobs_ERSST)
 
 SC_true_ERSST = allthelinalg.index_timeseries(outputobs_ERSST,bestpattern,landmask)
 SC_pred_ERSST = allthelinalg.index_timeseries(y_pred_CNN_ERSST,bestpattern,landmask)

@@ -60,7 +60,7 @@ def mapmetrics(y_pred,y_true,nvars,lon,lat,centre,title,settings):
     
     y_out = np.copy(y_true)
      
-    mseplot = np.mean(np.abs(y_pred-y_out), axis=0)
+    mseplot = np.mean((y_pred-y_out)**2, axis=0)
     outdims = y_pred.shape[1:]
     
     pearsonrplot = np.empty(outdims)+np.nan
@@ -143,20 +143,26 @@ def metrics(y_pred,y_true):
      
     y_out = np.copy(y_true)
      
-    mseplot = np.mean(np.abs(y_pred-y_out), axis=0)
+    mse = np.mean((y_pred-y_out)**2, axis=0)
     outdims = y_pred.shape[1:]
     
     pearsonrplot = np.empty(outdims)+np.nan
     pearsonpplot = np.empty(outdims)+np.nan
-    
-    
     
     for i in range(outdims[0]):
         for j in range(outdims[1]):
     
             pearsonrplot[i, j], pearsonpplot[i, j] = pearsonr(
             y_pred[:, i, j], y_out[:, i, j])
-            
-    meanerr = np.mean(y_pred-y_true,axis=0)    
-    
-    return pearsonrplot,mseplot
+
+    return pearsonrplot,mse
+
+
+
+
+
+
+
+
+
+

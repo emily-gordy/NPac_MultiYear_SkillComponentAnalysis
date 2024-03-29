@@ -116,7 +116,7 @@ def weightedMSE(weights):
     return MSE
 
 def scheduler(epoch, lr):
-  if epoch < 30:
+  if epoch < 20:
     return lr
   else:
     return lr * tf.math.exp(-0.1)

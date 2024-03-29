@@ -47,8 +47,6 @@ def build_CNN_full(inputdata,outputdata,settings,random_seed):
         
         x=tf.keras.layers.BatchNormalization()(x)
     
-    
-    
     # flatten
     x = tf.keras.layers.Flatten()(x)
     

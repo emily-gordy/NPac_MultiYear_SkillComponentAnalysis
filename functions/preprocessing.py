@@ -94,6 +94,8 @@ def pull_data_obs_PDOdemean(var,source):
         ds = xr.open_dataset(file)
         da = ds["sst"]
     
+    da = xr.where(da==-1.6,np.nan,da)
+    
     da_seasonal = da.groupby("time.month").mean("time")
     da = da.groupby("time.month")-da_seasonal # remove seasonal cycle
     

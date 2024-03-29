@@ -32,6 +32,8 @@ def get_experiment_settings(experimentname):
                     4487873,
                     5487191,
                     5974863,
+                    7494135,
+                    8245643,
                     ],
             "activation":"relu",
             "modellist":[
