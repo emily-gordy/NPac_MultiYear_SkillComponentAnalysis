@@ -111,7 +111,9 @@ inputobs_HadISST,outputobs_HadISST = preprocessing.concatobs(inputobs_HadISST,ou
 #%% LIM functions
 
 def LIM_getG(data,tau,dims,landmask,weights):
-
+    
+    data = data*weights[np.newaxis,:,:]
+    
     data = np.reshape(data,dims) # reshape to time dimension
     
     data_0 = data[:,:,:-1*tau,:,:] # lead/lag by lead time
@@ -304,21 +306,12 @@ y_pred_test_LIM,outputtest_tau = LIM_cmodel(outputtest,tau,testdims,landmask,G)
 
 r_test_LIM,mse_test_LIM = metricplots.metrics(y_pred_test_LIM,outputtest_tau)
 
-nmode = get_normalmodes(G)
+y_pred_LIM_ERSST,outputobs_ERSST_tau = LIM_obs(outputobs_ERSST,tau,landmask,G)
+y_pred_LIM_HadISST,outputobs_HadISST_tau = LIM_obs(outputobs_HadISST,tau,landmask,G)
 
-y_pred_obs_ERSST,outputobs_ERSST_tau = LIM_obs(outputobs_ERSST,tau,landmask,G)
-y_pred_obs_HadISST,outputobs_HadISST_tau = LIM_obs(outputobs_HadISST,tau,landmask,G)
+r_ERSST_LIM,mse_ERSST_LIM = metricplots.metrics(y_pred_LIM_ERSST,outputobs_ERSST_tau)
 
-nmode_true_ERSST = allthelinalg.index_timeseries(outputobs_ERSST_tau,nmode,landmask)
-nmode_pred_ERSST = allthelinalg.index_timeseries(y_pred_obs_ERSST,nmode,landmask)
-
-nmode_true_HadISST = allthelinalg.index_timeseries(outputobs_HadISST_tau,nmode,landmask)
-nmode_pred_HadISST = allthelinalg.index_timeseries(y_pred_obs_HadISST,nmode,landmask)
-
-r_LIM_ERSST,_ = pearsonr(nmode_true_ERSST,nmode_pred_ERSST)
-r_LIM_HadISST,_ = pearsonr(nmode_true_HadISST,nmode_pred_HadISST)
-
-# r_test_LIM,mse_test_LIM = metricplots.metrics(y_pred_obs_ERSST,outputobs_ERSST_tau)
+mse_ERSST_LIM_full = np.nanmean((y_pred_LIM_ERSST-outputobs_ERSST_tau)**2)
 
 #%%
 
@@ -348,146 +341,9 @@ r_test_CNN,mse_test_CNN = metricplots.metrics(y_pred_test_CNN,outputtest)
 y_pred_CNN_ERSST = full_model.predict(inputobs_ERSST)
 y_pred_CNN_HadISST = full_model.predict(inputobs_HadISST)
 
-bestpattern = allthelinalg.calculate_SC(y_pred_val,outputval,landmask)   
+r_ERSST_CNN,mse_ERSST_CNN = metricplots.metrics(y_pred_CNN_ERSST,outputobs_ERSST)
 
-# r_test_CNN,mse_test_CNN = metricplots.metrics(y_pred_CNN_ERSST,outputobs_ERSST)
-
-SC_true_ERSST = allthelinalg.index_timeseries(outputobs_ERSST,bestpattern,landmask)
-SC_pred_ERSST = allthelinalg.index_timeseries(y_pred_CNN_ERSST,bestpattern,landmask)
-
-SC_true_HadISST = allthelinalg.index_timeseries(outputobs_HadISST,bestpattern,landmask)
-SC_pred_HadISST = allthelinalg.index_timeseries(y_pred_CNN_HadISST,bestpattern,landmask)
-
-r_CNN_ERSST,_ = pearsonr(SC_true_ERSST,SC_pred_ERSST)
-r_CNN_HadISST,_ = pearsonr(SC_true_HadISST,SC_pred_HadISST)
-
-
-#%%
-
-nmode_testing = allthelinalg.index_timeseries(outputtest_tau,nmode,landmask)
-SCindex_testing = allthelinalg.index_timeseries(outputtest,bestpattern,landmask)
-
-nmode_pred = allthelinalg.index_timeseries(y_pred_test_LIM,nmode,landmask)
-SCindex_pred = allthelinalg.index_timeseries(y_pred_test_CNN,bestpattern,landmask)
-
-lenmodel_CNN = int(len(SCindex_testing)/9)
-lenmodel_LIM = int(len(nmode_testing)/9)
-
-    
-#%%
-
-ntimesteps_CNN = len(obsyearvec)+tau
-ntimesteps_LIM = len(obsyearvec)
-
-nmodels = len(modellist)
-
-r_CNN = np.empty((nmodels,len(testvariants)))
-r_LIM = np.empty((nmodels,len(testvariants)))
-
-plt.figure(figsize=(10,9))
-
-for imodel,cmodel in enumerate(modellist):
-    
-    trueloop = SCindex_testing[imodel*lenmodel_CNN:(imodel+1)*lenmodel_CNN]
-    predloop = SCindex_pred[imodel*lenmodel_CNN:(imodel+1)*lenmodel_CNN]
-    
-    err = np.abs(trueloop-predloop)
-    
-    plt.subplot(3,3,imodel+1)
-    plt.scatter(trueloop,predloop,
-                    c=err,marker='.',cmap=cmr.ember_r)
-    plt.plot(np.arange(-4,5),np.arange(-4,5),color='#002fa7')
-    plt.title(cmodel)
-    plt.xlim(-5,5)
-    plt.ylim(-5,5)    
-    # r2,_ = pearsonr(nmode_testing[imodel*lenmodel_CNN:(imodel+1)*lenmodel_CNN],
-    #                 nmode_pred[imodel*lenmodel_CNN:(imodel+1)*lenmodel_CNN])
-    
-    # r_CNN.append(r1)
-    # r_LIM.append(r2)
-    for ivariant in range(len(testvariants)):
-        r_CNN[imodel,ivariant],_ = pearsonr(trueloop[ivariant*ntimesteps_CNN:
-                                                   (ivariant+1)*ntimesteps_CNN],
-                                          predloop[ivariant*ntimesteps_CNN:
-                                                   (ivariant+1)*ntimesteps_CNN])
-
-plt.tight_layout()
-plt.show()
-    
-plt.figure(figsize=(10,9))
-
-for imodel,cmodel in enumerate(modellist):
-
-    trueloop = nmode_testing[imodel*lenmodel_LIM:(imodel+1)*lenmodel_LIM]
-    predloop = nmode_pred[imodel*lenmodel_LIM:(imodel+1)*lenmodel_LIM]
-    
-    err = np.abs(trueloop-predloop)
-    
-    plt.subplot(3,3,imodel+1)
-    plt.scatter(nmode_testing[imodel*lenmodel_LIM:(imodel+1)*lenmodel_LIM],
-                    nmode_pred[imodel*lenmodel_LIM:(imodel+1)*lenmodel_LIM],
-                    c=err,marker='.',cmap=cmr.ember_r)
-    plt.plot(np.arange(-4,5),np.arange(-4,5),color='#002fa7')
-    plt.xlim(-5,5)
-    plt.ylim(-5,5)    
-    plt.title(cmodel)
-    
-    # r2,_ = pearsonr(nmode_testing[imodel*lenmodel_CNN:(imodel+1)*lenmodel_CNN],
-    #                 nmode_pred[imodel*lenmodel_CNN:(imodel+1)*lenmodel_CNN])
-    
-    # r_CNN.append(r1)
-    # r_LIM.append(r2)
-    for ivariant in range(len(testvariants)):
-        r_LIM[imodel,ivariant],_ = pearsonr(trueloop[ivariant*ntimesteps_LIM:
-                                                   (ivariant+1)*ntimesteps_LIM],
-                                          predloop[ivariant*ntimesteps_LIM:
-                                                   (ivariant+1)*ntimesteps_LIM])
-
-plt.tight_layout()
-plt.show()
-
-#%%
-
-ttest = []
-
-meanr_CNN = np.mean(r_CNN,axis=1)
-meanr_LIM = np.mean(r_LIM,axis=1)
-
-maxr_CNN = np.max(r_CNN,axis=1)
-maxr_LIM = np.max(r_LIM,axis=1)
-
-minr_CNN = np.min(r_CNN,axis=1)
-minr_LIM = np.min(r_LIM,axis=1)
-
-uppererrs_CNN = maxr_CNN-meanr_CNN
-lowererrs_CNN = meanr_CNN-minr_CNN
-
-uppererrs_LIM = maxr_LIM-meanr_LIM
-lowererrs_LIM = meanr_LIM-minr_LIM
-
-CNNbars = np.concatenate((lowererrs_CNN[np.newaxis,:],uppererrs_CNN[np.newaxis,:]),axis=0)
-LIMbars = np.concatenate((lowererrs_LIM[np.newaxis,:],uppererrs_LIM[np.newaxis,:]),axis=0)
-
-plt.figure(figsize=(8,8))
-
-for imodel,cmodel in enumerate(modellist):
-    
-    ttestloop = ttest_ind(r_CNN[imodel,:],r_LIM[imodel,:],equal_var=False)
-
-    ttest.append(ttestloop)
-
-    plt.errorbar(meanr_LIM[imodel],meanr_CNN[imodel],yerr=CNNbars[:,[imodel]],xerr=LIMbars[:,[imodel]],ls=None,
-                 label=cmodel,marker='o')
-
-plt.scatter(r_LIM_ERSST,r_CNN_ERSST,marker='x',color='xkcd:golden rod')
-plt.scatter(r_LIM_HadISST,r_CNN_HadISST,marker='x',color='xkcd:peach')
-plt.plot(np.arange(0,2),np.arange(0,2),color='xkcd:slate grey')
-
-plt.xlabel('LIM')
-plt.ylabel('CNN')
-
-plt.legend()
-
+mse_ERSST_CNN_full = np.nanmean((y_pred_CNN_ERSST-outputobs_ERSST)**2)
 
 #%%
 

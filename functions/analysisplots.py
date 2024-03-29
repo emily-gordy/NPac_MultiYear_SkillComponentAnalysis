@@ -115,7 +115,7 @@ def patternplots_SST(bestpattern,PDOpattern,truedata,preddata,outputval,y_pred_v
 
     plt.tight_layout
 
-    #plt.savefig("figures/" +title+"_patternscatterline.png",dpi=300)
+    plt.savefig("figures/" +title+"_patternscatterline.png",dpi=300)
     
     plt.show()
     
