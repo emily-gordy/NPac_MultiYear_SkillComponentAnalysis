@@ -27,7 +27,7 @@ def calculate_SC(y_pred_val,outputval,landmask):
     eigvals,evecs = eig(Se,Sv)
     bestinds = np.argsort(np.real(eigvals))
 
-    ivec = 0
+    ivec = 1
     
     evecsel = evecs[:,bestinds[ivec]]
     
@@ -103,7 +103,7 @@ def calculate_SC_weighted(y_pred_val,outputval,landmask,weights):
     eigvals,evecs = eig(Se,Sv)
     bestinds = np.argsort(np.real(eigvals))
 
-    ivec = 0
+    ivec = 1
     
     evecsel = evecs[:,bestinds[ivec]]
     

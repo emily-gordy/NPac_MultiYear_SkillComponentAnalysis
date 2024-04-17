@@ -191,9 +191,6 @@ for ifold, foldseed in enumerate(foldseeds):
         
         title = "seed = " + str(random_seed) + " ifold = " + str(ifold)
         metricplots.mapmetrics(y_pred, outputval, nvars, lon, lat, centre, title, experiment_dict)
-            
-        bestpattern = allthelinalg.calculate_SC(y_pred,outputval,landmask)  
-        analysisplots.plotpattern(bestpattern,lon,lat)
 
 #%%
 

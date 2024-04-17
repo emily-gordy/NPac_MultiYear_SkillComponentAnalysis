@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Mar 14 14:10:09 2024
+Created on Sun Apr 14 14:10:17 2024
 
 @author: egordon4
 """
@@ -101,41 +101,11 @@ ntestvars = int(len(valvariants)*len(modellist))
 
 centre = (outbounds[2]+outbounds[3])/2
 
-#%%
-
 inputobs_ERSST,outputobs_ERSST = preprocessing.make_inputoutput_obs(experiment_dict,"ERSST")
 inputobs_ERSST,outputobs_ERSST = preprocessing.concatobs(inputobs_ERSST,outputobs_ERSST,outputstd,run)
 
 inputobs_HadISST,outputobs_HadISST = preprocessing.make_inputoutput_obs(experiment_dict,"HadISST")
 inputobs_HadISST,outputobs_HadISST = preprocessing.concatobs(inputobs_HadISST,outputobs_HadISST,outputstd,run)
-
-
-#%%
-
-tau = 5
-
-weights = np.meshgrid(lon,lat)[1]
-latweights = np.sqrt(np.cos(np.deg2rad(weights)))
-
-bigdatashape = alloutputdata.shape
-
-traindims = LIM.get_partial_dims(alloutputdata,trainvariants)
-valdims = LIM.get_partial_dims(alloutputdata,valvariants)
-testdims = LIM.get_partial_dims(alloutputdata,testvariants)
-
-G = LIM.LIM_getG(outputdata,tau,traindims,landmask,weights)
-
-y_pred_val_LIM,outputval_tau = LIM.LIM_cmodel(outputval,tau,valdims,landmask,G)
-y_pred_test_LIM,outputtest_tau = LIM.LIM_cmodel(outputtest,tau,testdims,landmask,G)
-
-r_test_LIM,mse_test_LIM = metricplots.metrics(y_pred_test_LIM,outputtest_tau)
-
-y_pred_LIM_ERSST,outputobs_ERSST_tau = LIM.LIM_obs(outputobs_ERSST,tau,landmask,G)
-y_pred_LIM_HadISST,outputobs_HadISST_tau = LIM.LIM_obs(outputobs_HadISST,tau,landmask,G)
-
-r_ERSST_LIM,mse_ERSST_LIM = metricplots.metrics(y_pred_LIM_ERSST,outputobs_ERSST_tau)
-
-mse_ERSST_LIM_full = np.nanmean((y_pred_LIM_ERSST-outputobs_ERSST_tau)**2)
 
 #%%
 
@@ -165,79 +135,57 @@ r_test_CNN,mse_test_CNN = metricplots.metrics(y_pred_test_CNN,outputtest)
 y_pred_CNN_ERSST = full_model.predict(inputobs_ERSST)
 y_pred_CNN_HadISST = full_model.predict(inputobs_HadISST)
 
-r_ERSST_CNN,mse_ERSST_CNN = metricplots.metrics(y_pred_CNN_ERSST,outputobs_ERSST)
-
-mse_ERSST_CNN_full = np.nanmean((y_pred_CNN_ERSST-outputobs_ERSST)**2)
-
-#%%
-
-mse_ERSST_CNN[np.isnan(mse_ERSST_CNN)] = 0
-mse_ERSST_LIM[np.isnan(mse_ERSST_LIM)] = 0
-r_ERSST_CNN[np.isnan(r_ERSST_CNN)] = 0
-r_ERSST_LIM[np.isnan(r_ERSST_LIM)] = 0
-
+SC_CNN = allthelinalg.calculate_SC(y_pred_val_CNN,outputval,landmask)
+SC_CNN_test_timeseries = allthelinalg.index_timeseries(outputtest,SC_CNN,landmask)
+SC_CNN_ERSST_timeseries = allthelinalg.index_timeseries(outputobs_ERSST,SC_CNN,landmask)
 
 #%%
 
-plt.figure(figsize=(8,5))
+def get_variance_explained(SC_index,data):
+    
+    datashape = data.shape
+    
+    SC_variance_explained = np.empty((datashape[1],datashape[2]))
+    
+    for ilat in range(datashape[1]):
+        for ilon in range(datashape[2]):
+            SC_variance_explained[ilat,ilon],_ = pearsonr(SC_index,data[:,ilat,ilon])
+    
+    SC_variance_explained = SC_variance_explained**2
+    
+    return SC_variance_explained
+    
 
-a1=plt.subplot(2,1,1,projection=ccrs.PlateCarree(central_longitude=180))
-c1=a1.pcolormesh(lon,lat,-1*(mse_ERSST_CNN-mse_ERSST_LIM),vmin=-0.5,vmax=0.5,cmap=cmr.redshift,transform=ccrs.PlateCarree())
+#%%
+
+varexplained_test_SST = get_variance_explained(SC_CNN_test_timeseries,outputtest)
+varexplained_ERSST = get_variance_explained(SC_CNN_ERSST_timeseries[:-5],inputobs_ERSST[5:,:,:,0])
+
+#%%
+
+projection = ccrs.PlateCarree(central_longitude=180)
+transform = ccrs.PlateCarree()
+
+plt.figure(figsize=(10,5))
+
+a1=plt.subplot(1,2,1,projection=projection)
+a1.pcolormesh(lon,lat,varexplained_test_SST,vmin=0,vmax=1,transform=transform,cmap="inferno")
 a1.add_feature(cfeature.NaturalEarthFeature('physical', 'land', '50m', edgecolor='face', facecolor='grey'))
 
-a2=plt.subplot(2,1,2,projection=ccrs.PlateCarree(central_longitude=180))
-c2=a2.pcolormesh(lon,lat,r_ERSST_CNN-r_ERSST_LIM,vmin=-0.5,vmax=0.5,cmap=cmr.redshift,transform=ccrs.PlateCarree())
+a2=plt.subplot(1,2,2,projection=projection)
+a2.pcolormesh(lon,lat,varexplained_ERSST,vmin=0,vmax=1,transform=transform,cmap="inferno")
 a2.add_feature(cfeature.NaturalEarthFeature('physical', 'land', '50m', edgecolor='face', facecolor='grey'))
 
-cax=plt.axes((0.9,0.2,0.02,0.6))
-cbar = plt.colorbar(c1,cax=cax,extend='both')
-cbar.ax.set_yticks(np.arange(-0.5,1,0.5))
-
-#%%
-
-nmode = LIM.get_normalmodes(G,landmask)
-SC_LIM = allthelinalg.calculate_SC(y_pred_val_LIM,outputval_tau,landmask)
-SC_CNN = allthelinalg.calculate_SC(y_pred_val_CNN,outputval,landmask)
-
-nmodetrue = allthelinalg.index_timeseries(outputobs_ERSST_tau,nmode,landmask)
-nmodepred = allthelinalg.index_timeseries(y_pred_LIM_ERSST,nmode,landmask)
-
-SC_LIM_true = allthelinalg.index_timeseries(outputobs_ERSST_tau,SC_LIM,landmask)
-SC_LIM_pred = allthelinalg.index_timeseries(y_pred_LIM_ERSST,SC_LIM,landmask)
-
-SC_CNN_true = allthelinalg.index_timeseries(outputobs_ERSST,SC_CNN,landmask)
-SC_CNN_pred = allthelinalg.index_timeseries(y_pred_CNN_ERSST,SC_CNN,landmask)
-
-#%%
-
-plt.figure(figsize=(10,4))
-
-plt.plot(obsyearvec,nmodetrue,color="xkcd:black",
-         label="LIM Normal Mode",linewidth=1.8)
-plt.plot(obsyearvec,SC_CNN_true[5:],color='xkcd:slate',
-         label="CNN Skill Component",linewidth=1.8)
-plt.plot(obsyearvec,nmodepred,color="xkcd:golden rod",linestyle='--',
-         label="LIM Predicted Normal Mode",linewidth=2.2)
-plt.plot(obsyearvec,SC_CNN_pred[5:],color='xkcd:teal',
-         linestyle='-.',label="CNN Predicted Skill Component",linewidth=2.2)
-
-plt.legend()
-
-r_LIM,_ = pearsonr(nmodetrue,nmodepred)
-r_CNN,_ = pearsonr(SC_CNN_true,SC_CNN_pred)
-
-plt.text(1995,-1.9,"r = %.4f" %(r_LIM),color='xkcd:golden rod',fontsize=16,weight='bold')
-plt.text(1995,-2.3,"r = %.4f" %(r_CNN),color='xkcd:teal',fontsize=16,weight='bold')
-
-plt.xlabel('year')
-plt.ylabel('index')
-
-plt.ylim(-2.8,2.8)
-plt.xlim(obsyearvec[0],obsyearvec[-1])
-
 plt.tight_layout()
-
-# plt.savefig("../figures/LIMcomparison.png",dpi=300)
-
 plt.show()
+
+# now do this with surface temp? or just show how great we are at marine heatwaves?
+
+
+
+
+
+
+
+
 

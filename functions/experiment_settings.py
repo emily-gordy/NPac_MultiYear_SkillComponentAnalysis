@@ -117,9 +117,9 @@ def get_experiment_settings(experimentname):
             "patience": 10,
             "dropout_rate": 0.2,
             "seeds": [
-                    4487873,
-                    5487191,
                     5974863,
+                    7494135,
+                    8245643,
                     ],
             "activation":"relu",
             "modellist":[
@@ -140,7 +140,7 @@ def get_experiment_settings(experimentname):
             "ntrainvariants": 15,
             "nvalvariants": 8,
             "ntestvariants": 7,
-            "foldseeds": [457,841,389,544,365]
+            "foldseeds": [457,841,389,544,365,648,248,149,139,987,453,751,864,745,314]
     
         }, 
         

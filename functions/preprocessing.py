@@ -66,8 +66,17 @@ def pull_data_obs(var,source):
         
         ds = xr.open_dataset(file)
         da = ds["sst"]
+
+    elif source == "ERA5":
+
+        filelist = glob.glob(path + "*" + source + "*2x2*.nc")
+        file = filelist[0]
+        print(file)
+        
+        ds = xr.open_dataset(file)
+        da = ds["t2m"]
     
-    polys = da.polyfit(dim="time",deg=2)    
+    polys = da.polyfit(dim="time",deg=3)    
     coordout = da.time
     trend = xr.polyval(coord=coordout, coeffs=polys.polyfit_coefficients)
     
@@ -668,8 +677,36 @@ def PDOobs(settings,source):
     
     return PDOpattern
 
+def makeoutputonly_obs(settings,source,outbounds):
 
+    # make data corresponding to CNN output for specified variable and region
+    
+    outres = settings["outres"]
+    leadtime = settings["leadtime"]
+    run = settings["run"]    
+    
+    # hard code year range for obs
+    year1 = 1870
+    year2 = 2022
+    
+    obsout = pull_data_obs(settings["varout"],source)
+    
+    obsout = obsout.rolling(year=run,center=False).mean()
 
+    if outres:
+        obsout = regrid(obsout,outres)
+
+    if outbounds[2]<0:
+        obsout.coords['lon'] = (obsout.coords['lon'] + 180) % 360 - 180
+        obsout = obsout.sortby(obsout.lon)
+
+    if "SST" in source:
+        outputdata = obsout.sel(lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]),year=slice(year1+leadtime+2*run,year2))
+    else:
+        # hard code ERA5 bounds
+        outputdata = obsout.sel(lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]),year=slice(1944,year2))
+
+    return outputdata
 
 
 

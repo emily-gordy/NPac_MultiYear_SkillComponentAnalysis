@@ -137,6 +137,9 @@ def mapmetrics(y_pred,y_true,nvars,lon,lat,centre,title,settings):
     plt.suptitle(title)
     
     plt.tight_layout()
+    
+    # plt.savefig("figures/mapmetrics_"+title+".png",dpi=300)
+    
     plt.show()
 
 def metrics(y_pred,y_true):

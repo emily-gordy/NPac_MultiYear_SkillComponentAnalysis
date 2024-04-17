@@ -1,118 +1,24 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Mar 18 09:52:23 2024
-
-@author: egordon4
-"""
-
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Mar 14 14:10:09 2024
+Created on Thu Apr 11 08:54:24 2024
 
 @author: egordon4
 """
 
 import numpy as np
-
-import tensorflow as tf
-
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-import cartopy.feature as cfeature
+from scipy.linalg import eig
+from scipy.stats import pearsonr
 import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+import allthelinalg
+import matplotlib.pyplot as plt
 import cmasher as cmr
 
-import sys
-sys.path.append("../functions/")
-
-import preprocessing
-import experiment_settings
-import build_model
-import metricplots
-import allthelinalg
-import analysisplots
-
-from scipy.stats import pearsonr
-from scipy.linalg import eig
-
-import pylab
-
-
-# pretty plots
-mpl.rcParams['figure.facecolor'] = 'white'
-mpl.rcParams['figure.dpi'] = 150
-mpl.rcParams['font.family'] = 'sans-serif'
-mpl.rcParams['font.size'] = 12
-mpl.rcParams['font.sans-serif']=['Verdana']
-
-params = {"ytick.color": "k",
-          "xtick.color": "k",
-          "axes.labelcolor": "k",
-          "axes.edgecolor": "k"}
-plt.rcParams.update(params)
-
-# %% load and preprocess data
-
-modelpath = "../models/"
-experiment_name = "allcmodel-tos_allcmodel-tos_1-5yearlead"
-experiment_dict = experiment_settings.get_experiment_settings(experiment_name)
-
-filefront = experiment_dict["filename"]
-filename = modelpath + experiment_dict["filename"]
-
-trainvariants = experiment_dict["trainvariants"]
-valvariants = experiment_dict["valvariants"]
-testvariants = experiment_dict["testvariants"]
-trainvaltest = [trainvariants,valvariants,testvariants]
-run = experiment_dict["run"]
-outbounds = experiment_dict["outbounds"]
-leadtime = experiment_dict["leadtime"]
-
-obsyearvec = np.arange(1870+3*run+leadtime,2023,)
-
-modellist = experiment_dict["modellist"]
-
-datafile = "../processed_data/" + filefront + ".npz"
-
-datamat = np.load(datafile)
-
-allinputdata = datamat["allinputdata"]
-alloutputdata = datamat["alloutputdata"]
-
-inputdata,inputval,inputtest,outputdata,outputval,outputtest = preprocessing.splitandflatten(
-    allinputdata,alloutputdata,trainvaltest,experiment_dict["run"])
-
-outputstd = np.std(outputdata, axis=0, keepdims=True)
-outputdata = outputdata/outputstd
-outputval = outputval/outputstd
-outputtest = outputtest/outputstd
-
-outputdata[:, np.isnan(np.mean(outputdata, axis=0))] = 0
-outputval[:, np.isnan(np.mean(outputval, axis=0))] = 0
-outputtest[:, np.isnan(np.mean(outputtest, axis=0))] = 0  
-
-lon, lat = preprocessing.outlonxlat(experiment_dict)
-landmask = (np.mean(outputval,axis=0))!=0
-
-nvalvars = int(len(valvariants)*len(modellist))
-ntestvars = int(len(valvariants)*len(modellist))
-
-centre = (outbounds[2]+outbounds[3])/2
-
-#%%
-
-inputobs_ERSST,outputobs_ERSST = preprocessing.make_inputoutput_obs(experiment_dict,"ERSST")
-inputobs_ERSST,outputobs_ERSST = preprocessing.concatobs(inputobs_ERSST,outputobs_ERSST,outputstd,run)
-
-inputobs_HadISST,outputobs_HadISST = preprocessing.make_inputoutput_obs(experiment_dict,"HadISST")
-inputobs_HadISST,outputobs_HadISST = preprocessing.concatobs(inputobs_HadISST,outputobs_HadISST,outputstd,run)
-
-#%% LIM functions
-
-def LIM_getG(data,tau,dims,landmask):
-
+def LIM_getG(data,tau,dims,landmask,weights):
+    
+    data = data*weights[np.newaxis,:,:]
+    
     data = np.reshape(data,dims) # reshape to time dimension
     
     data_0 = data[:,:,:-1*tau,:,:] # lead/lag by lead time
@@ -174,7 +80,7 @@ def get_partial_dims(data,variants):
     
     return dimsout
 
-def get_normalmodes(G):
+def get_normalmodes(G,landmask):
     
     eigvals,evecs = eig(G)
     bestinds = np.argsort(np.real(eigvals))
@@ -284,36 +190,9 @@ def patternplots_SST(bestpattern,PDOpattern,truedata,preddata,outputval,y_pred_v
     #plt.savefig("figures/" +title+"_patternscatterline.png",dpi=300)
     
     plt.show()
-
-#%%
-
-tau = 5
-
-bigdatashape = alloutputdata.shape
-
-traindims = get_partial_dims(alloutputdata,trainvariants)
-valdims = get_partial_dims(alloutputdata,valvariants)
-testdims = get_partial_dims(alloutputdata,testvariants)
-
-G = LIM_getG(outputdata,tau,traindims,landmask)
-
-y_pred_val,outputval_tau = LIM_cmodel(outputval,tau,valdims,landmask,G)
-y_pred_test,outputtest_tau = LIM_cmodel(outputtest,tau,testdims,landmask,G)
-
-bestpattern = allthelinalg.calculate_SC(y_pred_val,outputval_tau,landmask)   
-
-analysisplots.plotpattern_SST(bestpattern,lon,lat,outputstd)
-
-y_pred_obs_ERSST,outputobs_tau = LIM_obs(outputobs_ERSST,tau,landmask,G)
-
-nmode = get_normalmodes(G)
-
-patternplots_SST(bestpattern,nmode,outputobs_tau,y_pred_obs_ERSST,outputval,y_pred_val,
-                              landmask,lon,lat,obsyearvec,"ERSST",outputstd)
-
-y_pred_obs_HadISST,outputobs_HadISST_tau = LIM_obs(outputobs_HadISST,tau,landmask,G)
-
-patternplots_SST(bestpattern,nmode,outputobs_HadISST_tau,y_pred_obs_HadISST,outputval,y_pred_val,
-                              landmask,lon,lat,obsyearvec,"HadISST",outputstd)
-
-
+    
+    
+    
+    
+    
+    
