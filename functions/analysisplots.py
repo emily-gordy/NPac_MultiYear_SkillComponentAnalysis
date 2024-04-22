@@ -284,11 +284,11 @@ def prettyscatterplot_multiobs(modeldata,obsval,modellist,testvariants,ylabel,so
     
     plt.xticks(np.arange(nmodels),labels=modellist,rotation=60)
     plt.ylabel(ylabel)
-    plt.ylim(-0.2,1)
+    plt.ylim(-0.5,1)
     
     plt.tight_layout()
-
-    plt.savefig(savestr,dpi=300)
+    if savestr:
+        plt.savefig(savestr,dpi=300)
     plt.show()
 
 def inputplots(inputdata,outputdata,bestpattern,landmask,inres,titlestr):

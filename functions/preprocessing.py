@@ -15,6 +15,8 @@ from scipy import sparse
 from scipy.sparse.linalg import eigs
 from scipy.linalg import eig
 
+import time
+
 emilypath = "/Users/egordon4/Documents/Experiments/NPac_MultiYear_SkillComponentAnalysis/"
 relpath = "data/"
 path = emilypath+relpath
@@ -31,6 +33,24 @@ def pull_data(var,cmodel):
     allensint = allensannual-ensmean
     
     allensint = allensint.squeeze()
+
+    return allensint
+
+def pull_data_polydetrend(var,cmodel):
+    filelist = glob.glob(path + var + "*" + cmodel + "*2x2*.nc")
+    file = filelist[0]
+    
+    allens = xr.open_dataarray(file,chunks='auto')
+    allens = allens.isel(variant=np.arange(23,30))
+
+    polys = allens.polyfit(dim="time",deg=3)    
+    coordout = allens.time
+    trend = xr.polyval(coord=coordout, coeffs=polys.polyfit_coefficients)
+        
+    allens_anom = allens-trend
+    allens_anom = allens_anom.groupby("time.year").mean() # annual means
+
+    allensint = allens_anom.squeeze()
 
     return allensint
 
@@ -707,6 +727,92 @@ def makeoutputonly_obs(settings,source,outbounds):
         outputdata = obsout.sel(lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]),year=slice(1944,year2))
 
     return outputdata
+
+def makeoutputonly_modellist_emeandetrend(settings,outbounds):
+
+    alloutputdata = []
+    
+    modellist = settings["modellist"]
+    outres = settings["outres"]
+    leadtime = settings["leadtime"]
+
+    run = settings["run"]
+    # n_input = settings["n_input"]
+    
+    startyear = 1851 # start year for LEs
+    year1 = startyear+run # first year with data
+    year2 = 2014 # last year with data
+
+    alloutputdata = np.empty((9,7,149,45,90))
+    
+    for imodel,cmodel in enumerate(modellist):
+        t1 = time.time()
+        print(cmodel)
+        allensout = pull_data(settings["varout"],cmodel)
+        allensout = allensout[23:30,:,:,:]
+        allensout = allensout.rolling(year=run,center=False).mean()
+
+        if outres:
+            allensout = regrid(allensout,outres)
+                    
+        if outbounds[2]<0:
+            allensout.coords['lon'] = (allensout.coords['lon'] + 180) % 360 - 180
+            allensout = allensout.sortby(allensout.lon)
+            outputdata = allensout.sel(year=slice(year1+(leadtime+2*run),year2),lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]))
+        else:
+            outputdata = allensout.sel(year=slice(year1+(leadtime+2*run),year2),lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]))
+
+        alloutputdata[imodel] = np.squeeze(np.asarray(outputdata))
+        
+        t2 = time.time()
+        
+        print("elapsed time = %f" %(t2-t1))
+    
+    return alloutputdata
+
+def makeoutputonly_modellist_polydetrend(settings,outbounds):
+        
+    alloutputdata = []
+    
+    modellist = settings["modellist"]
+    outres = settings["outres"]
+    leadtime = settings["leadtime"]
+
+    run = settings["run"]
+    
+    startyear = 1851 # start year for LEs
+    year1 = startyear+run # first year with data
+    year2 = 2014 # last year with data
+    
+    alloutputdata = np.empty((9,7,149,45,90))
+    
+    for imodel,cmodel in enumerate(modellist):
+        
+        t1 = time.time()
+        
+        print(cmodel)
+        allensout = pull_data_polydetrend(settings["varout"],cmodel)
+    
+        allensout = allensout.rolling(year=run,center=False).mean()
+
+        if outres:
+            allensout = regrid(allensout,outres)
+                    
+        if outbounds[2]<0:
+            allensout.coords['lon'] = (allensout.coords['lon'] + 180) % 360 - 180
+            allensout = allensout.sortby(allensout.lon)
+            outputdata = allensout.sel(year=slice(year1+(leadtime+2*run),year2),lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]))
+        else:
+            outputdata = allensout.sel(year=slice(year1+(leadtime+2*run),year2),lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]))
+
+        alloutputdata[imodel] = np.squeeze(np.asarray(outputdata))    
+        
+        t2 = time.time()
+        
+        print("elapsed time = %f" %(t2-t1))
+        
+    return alloutputdata
+
 
 
 

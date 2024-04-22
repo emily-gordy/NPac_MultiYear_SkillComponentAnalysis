@@ -65,43 +65,27 @@ if saveflag:
              allinputdata = allinputdata,
              alloutputdata = alloutputdata)
     
-    inputdata,inputval,inputtest,outputdata,outputval,outputtest = preprocessing.splitandflatten(
-        allinputdata,alloutputdata,trainvaltest,experiment_dict["run"])
-    
-    inputdata[:, np.isnan(np.mean(inputdata, axis=0))] = 0
-    inputval[:, np.isnan(np.mean(inputval, axis=0))] = 0
-    inputtest[:, np.isnan(np.mean(inputtest, axis=0))] = 0
-
-    outputstd = np.std(outputdata, axis=0, keepdims=True)
-    outputdata = outputdata/outputstd
-    outputval = outputval/outputstd
-    outputtest = outputtest/outputstd
-
-    outputdata[:, np.isnan(np.mean(outputdata, axis=0))] = 0
-    outputval[:, np.isnan(np.mean(outputval, axis=0))] = 0
-    outputtest[:, np.isnan(np.mean(outputtest, axis=0))] = 0
-    
 else:
     datamat = np.load(datafile)
     
     allinputdata = datamat["allinputdata"]
     alloutputdata = datamat["alloutputdata"]
 
-    inputdata,inputval,inputtest,outputdata,outputval,outputtest = preprocessing.splitandflatten(
-        allinputdata,alloutputdata,trainvaltest,experiment_dict["run"])
-    
-    inputdata[:, np.isnan(np.mean(inputdata, axis=0))] = 0
-    inputval[:, np.isnan(np.mean(inputval, axis=0))] = 0
-    inputtest[:, np.isnan(np.mean(inputtest, axis=0))] = 0
+inputdata,inputval,inputtest,outputdata,outputval,outputtest = preprocessing.splitandflatten(
+    allinputdata,alloutputdata,trainvaltest,experiment_dict["run"])
 
-    outputstd = np.std(outputdata, axis=0, keepdims=True)
-    outputdata = outputdata/outputstd
-    outputval = outputval/outputstd
-    outputtest = outputtest/outputstd
+inputdata[:, np.isnan(np.mean(inputdata, axis=0))] = 0
+inputval[:, np.isnan(np.mean(inputval, axis=0))] = 0
+inputtest[:, np.isnan(np.mean(inputtest, axis=0))] = 0
 
-    outputdata[:, np.isnan(np.mean(outputdata, axis=0))] = 0
-    outputval[:, np.isnan(np.mean(outputval, axis=0))] = 0
-    outputtest[:, np.isnan(np.mean(outputtest, axis=0))] = 0  
+outputstd = np.std(outputdata, axis=0, keepdims=True)
+outputdata = outputdata/outputstd
+outputval = outputval/outputstd
+outputtest = outputtest/outputstd
+
+outputdata[:, np.isnan(np.mean(outputdata, axis=0))] = 0
+outputval[:, np.isnan(np.mean(outputval, axis=0))] = 0
+outputtest[:, np.isnan(np.mean(outputtest, axis=0))] = 0  
 
 
 #%% functions for training

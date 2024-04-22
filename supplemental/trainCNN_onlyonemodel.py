@@ -208,7 +208,7 @@ for imodel,cmodel in enumerate(modellist):
         
         metricplots.mapmetrics(y_pred, outputval_short, nvars, lon, lat, centre, title, experiment_dict)
             
-        bestpattern = allthelinalg.calculate_SC(y_pred,outputval_short,landmask)  
+        bestpattern = allthelinalg.calculate_SC_weighted(y_pred,outputval_short,landmask,latweights)  
         analysisplots.plotpattern(bestpattern,lon,lat)
 
 
