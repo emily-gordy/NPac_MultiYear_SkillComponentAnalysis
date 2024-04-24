@@ -291,6 +291,42 @@ def prettyscatterplot_multiobs(modeldata,obsval,modellist,testvariants,ylabel,so
         plt.savefig(savestr,dpi=300)
     plt.show()
 
+def prettyviolinplot_multiobs(modeldata,obsval,modellist,testvariants,ylabel,source,savestr):
+
+    nmodels = len(modellist)
+    plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.tab10(np.linspace(0,1,nmodels)))
+    
+    # lowerbound = np.min(modeldata,axis=1)
+    # upperbound = np.max(modeldata,axis=1)
+    
+    # lowers = np.mean(modeldata,axis=1)-lowerbound
+    # uppers = upperbound-np.mean(modeldata,axis=1)
+    
+    # errs = np.concatenate((lowers[np.newaxis,:],uppers[np.newaxis,:]),axis=0)
+
+    colors = ["xkcd:dark teal",
+             "xkcd:maroon"]
+
+    markers = ["x","+"]
+    
+    plt.figure(figsize=(10,4))
+    for imodel in range(len(modellist)):
+        plt.violinplot(modeldata[imodel,:],positions=[imodel])
+    for iobs,obs in enumerate(obsval):
+        plt.scatter(np.arange(nmodels),obs,marker=markers[iobs],color=colors[iobs],zorder=nmodels+1,label=source[iobs])
+
+    plt.legend(loc='lower center')
+    
+    plt.xticks(np.arange(nmodels),labels=modellist,rotation=60)
+    plt.ylabel(ylabel)
+    plt.ylim(-0.2,1)
+    
+    plt.tight_layout()
+    if savestr:
+        plt.savefig(savestr,dpi=300)
+    plt.show()
+
+
 def inputplots(inputdata,outputdata,bestpattern,landmask,inres,titlestr):
     
     projection = ccrs.EqualEarth(central_longitude=180)
