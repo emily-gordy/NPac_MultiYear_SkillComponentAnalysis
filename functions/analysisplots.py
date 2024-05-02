@@ -60,15 +60,15 @@ def patternplots_SST(bestpattern,PDOpattern,truedata,preddata,outputval,y_pred_v
     cbar1=plt.colorbar(c1,location='bottom')
     cbar1.ax.set_xlabel(r'SST ($^{\circ}$C)')
     cbar1.ax.set_xticks(np.arange(-0.6,0.8,0.2))
-    plt.title('PPDV pattern')
+    plt.title(title + ' first skill component pattern')
     plt.text(0.02,1.18,"a.",transform=a1.transAxes,fontsize=18,weight='bold')
     
     a2=plt.subplot(2,3,2)
     c=plt.scatter(SC_index_true,SC_index_pred,c=yearvec,cmap=cmr.ember)
     plt.plot(np.arange(-2,3),np.arange(-2,3),color='xkcd:slate grey')
     plt.text(-2.5,2,"r = %.4f" %(cc_SC))
-    plt.xlabel('true PPDV')
-    plt.ylabel('pred PPDV')
+    plt.xlabel('true skill component index')
+    plt.ylabel('pred skill component index')
     plt.xlim(-3,3)
     plt.ylim(-3,3)
     cbarscat1=plt.colorbar(c)
@@ -81,7 +81,7 @@ def patternplots_SST(bestpattern,PDOpattern,truedata,preddata,outputval,y_pred_v
     plt.ylim(-3,3)
     plt.xlim(yearvec[0],yearvec[-1])
     plt.legend()
-    plt.ylabel('PPDV index')
+    plt.ylabel('skill component index')
     plt.xlabel('year')
     plt.text(0.02,0.92,"c.",transform=a3.transAxes,fontsize=18,weight='bold')
 
@@ -92,14 +92,14 @@ def patternplots_SST(bestpattern,PDOpattern,truedata,preddata,outputval,y_pred_v
     cbar4=plt.colorbar(c4,location='bottom')
     cbar4.ax.set_xlabel(r'SST ($^{\circ}$C)')
     cbar4.ax.set_xticks(np.arange(-0.6,0.8,0.2))
-    plt.title('PDO pattern')
+    plt.title(title + ' PDO pattern')
     plt.text(0.02,1.18,"d.",transform=a4.transAxes,fontsize=18,weight='bold')
     
     a5=plt.subplot(2,3,5)
     c=plt.scatter(PDOindex_true,PDOindex_pred,c=yearvec,cmap=cmr.ember)
     plt.plot(np.arange(-2,3),np.arange(-2,3),color='xkcd:slate grey')
-    plt.xlabel('true PDO')
-    plt.ylabel('pred PDO')
+    plt.xlabel('true PDO index')
+    plt.ylabel('pred PDO index')
     plt.text(-2.5,2.1,"r = %.4f" %(cc_PDO))
     plt.xlim(-3,3)
     plt.ylim(-3,3)
@@ -234,7 +234,7 @@ def prettyscatterplot(modeldata,obsval,modellist,testvariants,ylabel,obslabels,s
     
     errs = np.concatenate((lowers[np.newaxis,:],uppers[np.newaxis,:]),axis=0)
     
-    plt.figure(figsize=(10,4))
+    plt.figure(figsize=(8,4))
 
     plt.errorbar(np.arange(nmodels),np.mean(modeldata,axis=1),errs,ls='none',color='xkcd:slate')
     for i in range(nmodels):
@@ -271,7 +271,7 @@ def prettyscatterplot_multiobs(modeldata,obsval,modellist,testvariants,ylabel,so
 
     markers = ["x","+"]
     
-    plt.figure(figsize=(10,4))
+    plt.figure(figsize=(8,4))
 
     plt.errorbar(np.arange(nmodels),np.mean(modeldata,axis=1),errs,ls='none',color='xkcd:slate',zorder=0)
     for i in range(nmodels):
@@ -309,7 +309,7 @@ def prettyviolinplot_multiobs(modeldata,obsval,modellist,testvariants,ylabel,sou
 
     markers = ["x","+"]
     
-    plt.figure(figsize=(10,4))
+    plt.figure(figsize=(8,4))
     for imodel in range(len(modellist)):
         plt.violinplot(modeldata[imodel,:],positions=[imodel])
     for iobs,obs in enumerate(obsval):
