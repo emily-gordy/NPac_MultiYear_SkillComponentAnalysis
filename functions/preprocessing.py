@@ -82,7 +82,6 @@ def pull_data_obs(var,source):
     
         filelist = glob.glob(path + "*" + source + "*2x2*.nc")
         file = filelist[0]
-        print(file)
         
         ds = xr.open_dataset(file)
         da = ds["sst"]

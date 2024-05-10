@@ -15,7 +15,10 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 
 import sys
-sys.path.append("../functions/")
+import os
+
+path = "/Users/egordon4/Documents/Experiments/NPac_MultiYear_SkillComponentAnalysis/"
+sys.path.append(path + "functions")
 
 import preprocessing
 import experiment_settings
@@ -37,9 +40,9 @@ params = {"ytick.color": "k",
           "axes.edgecolor": "k"}
 plt.rcParams.update(params)
 
-# %% load and preprocess data
+# load and preprocess data
 
-modelpath = "../models/"
+modelpath = path + "/models/"
 experiment_name = "allcmodel-tos_allcmodel-tos_1-5yearlead_tvtfolds"
 experiment_dict = experiment_settings.get_experiment_settings(experiment_name)
 
@@ -52,12 +55,10 @@ ntestvariants = experiment_dict["ntestvariants"]
 
 foldseeds = experiment_dict["foldseeds"]
 
-#%%
-
 data_experiment_name = "allcmodel-tos_allcmodel-tos_1-5yearlead"
 data_experiment_dict = experiment_settings.get_experiment_settings(data_experiment_name)
 datafilefront = data_experiment_dict["filename"]
-datafile = "../processed_data/" + datafilefront + ".npz"
+datafile = path + "/processed_data/" + datafilefront + ".npz"
 
 datamat = np.load(datafile)
 
@@ -65,7 +66,7 @@ allinputdata = datamat["allinputdata"]
 alloutputdata = datamat["alloutputdata"] 
 
 
-#%% functions for training
+# functions for training
 
 def weightedMSE(weights):
     weights = tf.cast(weights,tf.float32)
@@ -82,7 +83,6 @@ def scheduler(epoch, lr):
   else:
     return lr * tf.math.exp(-0.1)
 
-#%% some useful things
 
 patience = experiment_dict["patience"]
 seedlist = experiment_dict["seeds"]
@@ -106,8 +106,6 @@ es_callback = tf.keras.callbacks.EarlyStopping(
 
 nvariant = nvalvariants
 nmodels = len(modellist)
-
-#%% training time
 
 trainvaltestmat = []
 nmems = 30
@@ -144,7 +142,7 @@ for ifold, foldseed in enumerate(foldseeds):
     ntimesteps = int(len(outputval)/(nvariant*nmodels))
     landmask = (np.mean(outputval,axis=0))!=0
 
-    for random_seed in seedlist:
+    for random_seed in seedlist[:2]:
     
         fileout = filename + "_seed=" + str(random_seed) + "_foldseed_" + str(foldseed) +".h5"
         
@@ -185,16 +183,15 @@ for ifold, foldseed in enumerate(foldseeds):
         
         full_model.trainable = False # freeze BN
         
-        metricplots.historyplot(history)
+        #metricplots.historyplot(history)
         
         y_pred = full_model.predict(inputval)
         
         title = "seed = " + str(random_seed) + " ifold = " + str(ifold)
-        metricplots.mapmetrics(y_pred, outputval, nvars, lon, lat, centre, title, experiment_dict)
+        print(title + " done")
+        #metricplots.mapmetrics(y_pred, outputval, nvars, lon, lat, centre, title, experiment_dict)
 
-#%%
-
-trainvaltestfile = "../processed_data/foldseeds" + filefront + ".pkl"
+trainvaltestfile = path + "/processed_data/foldseeds" + filefront + ".pkl"
 
 with open(trainvaltestfile,'wb') as f:
     pkl.dump(trainvaltestmat, f)

@@ -117,6 +117,8 @@ def get_experiment_settings(experimentname):
             "patience": 10,
             "dropout_rate": 0.2,
             "seeds": [
+                    4487873,
+                    5487191,
                     5974863,
                     7494135,
                     8245643,

@@ -418,3 +418,40 @@ def bestpatternplot_poster(bestpattern,truedata,preddata,outputval,y_pred_val,la
     plt.savefig("figures/" +title+"_patternscatterline_SConly3.png",dpi=300)
     
     plt.show()    
+
+def prettyscatterplot_supp(modeldata,obsval,modellist,testvariants,ylabel,obslabels,savestr,legend):
+    
+    nmodels = len(modellist)
+    plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.tab10(np.linspace(0,1,nmodels)))
+
+    colorlist = ["xkcd:teal","xkcd:maroon"]
+    
+    lowerbound = np.min(modeldata,axis=1)
+    upperbound = np.max(modeldata,axis=1)
+    
+    lowers = np.mean(modeldata,axis=1)-lowerbound
+    uppers = upperbound-np.mean(modeldata,axis=1)
+    
+    errs = np.concatenate((lowers[np.newaxis,:],uppers[np.newaxis,:]),axis=0)
+    
+    plt.figure(figsize=(8,4))
+
+    plt.errorbar(np.arange(nmodels),np.mean(modeldata,axis=1),errs,ls='none',color='xkcd:slate')
+    for i in range(nmodels):
+        xvec = i*np.ones(len(testvariants))
+        plt.scatter(xvec,modeldata[i,:])
+    for iline in range(len(obsval)):
+        plt.hlines(obsval[iline],-0.4,nmodels-0.6,color=colorlist[iline],label=obslabels[iline])
+    plt.xticks(np.arange(nmodels),labels=modellist,rotation=60)
+    plt.ylabel(ylabel)
+
+    if legend:
+        plt.legend(loc='lower left')
+    
+    plt.ylim(-0.5,1)
+    plt.xlim(-0.5,nmodels-0.5)
+    
+    plt.tight_layout()
+    if savestr:
+        plt.savefig(savestr,dpi=300)
+    plt.show()
