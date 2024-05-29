@@ -4,7 +4,7 @@ This repository contains the code for the paper "Identifying a pattern of predic
 
 ## Python Environment
 One day, I will learn how to make a yml file, but today is not that day so first of all some environment requirements: All code is written in Python 3.9. On top of the basic packages (numpy, matplotlib, scipy), this project uses 
-* [tensorflow 2](https://www.tensorflow.org/install) for creating the CNNs.
+* [tensorflow 2.11](https://www.tensorflow.org/install) for creating the CNNs.
 * [xarray](https://docs.xarray.dev/en/stable/getting-started-guide/installing.html) for preprocessing data
 * [xesmf](https://xesmf.readthedocs.io/en/stable/installation.html) for regridding
 * [cartopy](https://scitools.org.uk/cartopy/docs/latest/installing.html) to make map plots
