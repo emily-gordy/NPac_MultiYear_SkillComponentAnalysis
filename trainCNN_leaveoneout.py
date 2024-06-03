@@ -20,8 +20,6 @@ import preprocessing
 import experiment_settings
 import build_model
 import metricplots
-import allthelinalg
-import analysisplots
 
 # pretty plots
 mpl.rcParams['figure.facecolor'] = 'white'

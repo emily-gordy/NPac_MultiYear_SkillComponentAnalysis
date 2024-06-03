@@ -1,6 +1,7 @@
 __pycache__/
 .ipynb_checkpoints/
 models/
+archive/
 .DS_Store
 LICENCE
 *.md
@@ -8,3 +9,4 @@ LICENCE
 *.npz
 *.png
 *.pdf
+*.h5
