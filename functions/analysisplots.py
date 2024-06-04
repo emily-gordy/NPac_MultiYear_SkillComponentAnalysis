@@ -137,7 +137,7 @@ def plotpattern(pattern,lon,lat):
     plt.tight_layout()
     plt.show()
 
-def plotpattern_SST(pattern,lon,lat,outputstd):
+def plotpattern_SST(pattern,lon,lat,outputstd,savestr):
 
     lbound = -0.3
     ubound = 0.3
@@ -160,8 +160,8 @@ def plotpattern_SST(pattern,lon,lat,outputstd):
     cbar.ax.set_yticks(np.arange(lbound,ubound+0.1,0.1))
     
     plt.tight_layout()
-
-    plt.savefig("figures/CMIP6pattern.png",dpi=300)
+    if savestr:
+        plt.savefig(savestr,dpi=300)
     
     plt.show()
     
