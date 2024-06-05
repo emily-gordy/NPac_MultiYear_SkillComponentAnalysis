@@ -68,10 +68,10 @@ def standardizations(outputval,y_pred_val,pattern,landmask):
 
 def corr_indextimeseries(bestpattern,truedata,preddata,outputval,y_pred_val,landmask):
 
-    SCstd_true,SCstd_pred = standardizations(outputval,y_pred_val,bestpattern,landmask)
+    # SCstd_true,SCstd_pred = standardizations(outputval,y_pred_val,bestpattern,landmask)
     
-    SC_index_true = index_timeseries(truedata,bestpattern,landmask)/SCstd_true
-    SC_index_pred = index_timeseries(preddata,bestpattern,landmask)/SCstd_pred
+    SC_index_true = index_timeseries(truedata,bestpattern,landmask)#/SCstd_true
+    SC_index_pred = index_timeseries(preddata,bestpattern,landmask)#/SCstd_pred
     
     r,p = pearsonr(SC_index_true,SC_index_pred)
     
