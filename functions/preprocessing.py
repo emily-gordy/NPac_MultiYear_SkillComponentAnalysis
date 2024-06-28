@@ -257,6 +257,21 @@ def concatobs(inputobs,outputobs,outputstd,run):
 
     return inputobs,outputobs
 
+def concatobs_torch(inputobs,outputobs,outputstd,run):
+    
+    inputobs = np.asarray(inputobs)
+    outputobs = np.asarray(outputobs)
+    
+    inputobs[np.isnan(inputobs)] = 0
+    inputobs1 = inputobs[:-1*run,:,:]
+    inputobs2 = inputobs[run:,:,:]
+    inputobs = np.concatenate((inputobs1[:,np.newaxis,:,:],inputobs2[:,np.newaxis,:,:]),axis=1)
+    
+    outputobs = outputobs/outputstd
+    outputobs[np.isnan(outputobs)] = 0
+
+    return inputobs,outputobs
+
 def make_inputoutput_modellist(settings):
 
     allinputdata = []
@@ -384,6 +399,70 @@ def splitandflatten(allinputdata,alloutputdata,variantsplit,run):
        
     
     return inputtrain_flat,inputval_flat,inputtest_flat,outputtrain_flat,outputval_flat,outputtest_flat
+
+def splitandflatten_torch(allinputdata,alloutputdata,variantsplit,run):
+    
+    allinputdata = np.asarray(allinputdata)
+    alloutputdata = np.asarray(alloutputdata)
+    
+    print('conversion done')
+
+    ntrain = len(variantsplit[0])
+    nval = len(variantsplit[1])
+    ntest = len(variantsplit[2])
+
+    input_train = allinputdata[:,variantsplit[0],:,:,:]
+    input_val = allinputdata[:,variantsplit[1],:,:,:]
+    input_test = allinputdata[:,variantsplit[2],:,:,:]   
+    
+    input1_train = input_train[:,:,:-1*run,:,:]
+    input2_train = input_train[:,:,run:,:,:]
+    input1_val = input_val[:,:,:-1*run,:,:]
+    input2_val = input_val[:,:,run:,:,:]
+    input1_test = input_test[:,:,:-1*run,:,:]
+    input2_test = input_test[:,:,run:,:,:]
+    
+    shape1 = input1_train.shape
+    
+    inputtrain1_flat = input1_train.reshape((shape1[0]*shape1[2]*ntrain,shape1[3],shape1[4]))
+    inputval1_flat = input1_val.reshape((shape1[0]*shape1[2]*nval,shape1[3],shape1[4]))
+    inputtest1_flat = input1_test.reshape((shape1[0]*shape1[2]*ntest,shape1[3],shape1[4]))
+    
+    inputtrain2_flat = input2_train.reshape((shape1[0]*shape1[2]*ntrain,shape1[3],shape1[4]))
+    inputval2_flat = input2_val.reshape((shape1[0]*shape1[2]*nval,shape1[3],shape1[4]))
+    inputtest2_flat = input2_test.reshape((shape1[0]*shape1[2]*ntest,shape1[3],shape1[4]))
+    
+    if len(alloutputdata.shape)==5: # predicting a domain
+    
+        output_train = alloutputdata[:,variantsplit[0],:,:,:]
+        output_val = alloutputdata[:,variantsplit[1],:,:,:]
+        output_test = alloutputdata[:,variantsplit[2],:,:,:]
+        
+        shape2 = output_train.shape
+        
+        outputtrain_flat = output_train.reshape((shape2[0]*shape2[2]*ntrain,shape2[3],shape2[4]))
+        outputval_flat = output_val.reshape((shape2[0]*shape2[2]*nval,shape2[3],shape2[4]))
+        outputtest_flat = output_test.reshape((shape2[0]*shape2[2]*ntest,shape2[3],shape2[4]))
+    
+    elif len(alloutputdata.shape)==3: # or predicting a single point
+
+        output_train = alloutputdata[:,variantsplit[0],:]
+        output_val = alloutputdata[:,variantsplit[1],:]
+        output_test = alloutputdata[:,variantsplit[2],:]
+        
+        shape1 = input_train.shape
+        shape2 = output_train.shape
+    
+        outputtrain_flat = output_train.reshape((shape2[0]*shape2[2]*ntrain))
+        outputval_flat = output_val.reshape((shape2[0]*shape2[2]*nval))
+        outputtest_flat = output_test.reshape((shape2[0]*shape2[2]*ntest))
+    
+    inputtrain_flat = np.concatenate((inputtrain1_flat[:,np.newaxis,:,:],inputtrain2_flat[:,np.newaxis,:,:]),axis=1)
+    inputval_flat = np.concatenate((inputval1_flat[:,np.newaxis,:,:],inputval2_flat[:,np.newaxis,:,:]),axis=1)
+    inputtest_flat = np.concatenate((inputtest1_flat[:,np.newaxis,:,:],inputtest2_flat[:,np.newaxis,:,:]),axis=1)
+    
+    return inputtrain_flat,inputval_flat,inputtest_flat,outputtrain_flat,outputval_flat,outputtest_flat
+
 
 def PDO_pattern_allmodels(settings):
     

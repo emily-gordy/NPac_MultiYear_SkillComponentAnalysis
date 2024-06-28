@@ -37,7 +37,7 @@ plt.rcParams.update(params)
 # %% load and preprocess data
 
 modelpath = "models/"
-experiment_name = "allcmodel-tos_allcmodel-tos_1-5yearlead"
+experiment_name = "allcmodel-tos_allcmodel-tos_2-9yearlead"
 experiment_dict = experiment_settings.get_experiment_settings(experiment_name)
 
 filefront = experiment_dict["filename"]
@@ -174,17 +174,17 @@ for random_seed in seedlist:
     
     full_model.trainable = False # freeze BN
     
-    metricplots.historyplot(history)
+    # metricplots.historyplot(history)
     
-    y_pred = full_model.predict(inputval)
+    # y_pred = full_model.predict(inputval)
     
-    metricplots.mapmetrics(y_pred, outputval, nvars, lon, lat, centre, 'all models', experiment_dict)
+    # metricplots.mapmetrics(y_pred, outputval, nvars, lon, lat, centre, 'all models', experiment_dict)
     
-    for imodel,cmodel in enumerate(modellist):
+    # for imodel,cmodel in enumerate(modellist):
         
-        metricplots.mapmetrics(y_pred[nvariant*ntimesteps*(imodel):nvariant*ntimesteps*(imodel+1)], 
-                              outputval[nvariant*ntimesteps*(imodel):nvariant*ntimesteps*(imodel+1)],
-                              nvariant, lon, lat, centre, cmodel, experiment_dict)
+    #     metricplots.mapmetrics(y_pred[nvariant*ntimesteps*(imodel):nvariant*ntimesteps*(imodel+1)], 
+    #                           outputval[nvariant*ntimesteps*(imodel):nvariant*ntimesteps*(imodel+1)],
+    #                           nvariant, lon, lat, centre, cmodel, experiment_dict)
         
 
 
