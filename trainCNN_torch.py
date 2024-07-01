@@ -46,7 +46,7 @@ plt.rcParams.update(params)
 # %% load and preprocess data
 
 modelpath = "models/"
-experiment_name = "allcmodel-tos_allcmodel-tos_2-9yearlead"
+experiment_name = "allcmodel-tos_allcmodel-tos_2-9yearlead_flexavg"
 experiment_dict = experiment_settings.get_experiment_settings(experiment_name)
 
 filefront = experiment_dict["filename"]
@@ -62,7 +62,7 @@ filecheck = glob.glob(datafile)
 saveflag = len(filecheck)==0
 
 if saveflag:
-    allinputdata,alloutputdata = preprocessing.make_inputoutput_modellist(experiment_dict)
+    allinputdata,alloutputdata = preprocessing.make_inputoutput_modellist_flexavg(experiment_dict)
     
     print('got data, converting to usable format')
     
@@ -80,7 +80,7 @@ else:
     alloutputdata = datamat["alloutputdata"]
 
 inputdata,inputval,inputtest,outputdata,outputval,outputtest = preprocessing.splitandflatten_torch(
-    allinputdata,alloutputdata,trainvaltest,experiment_dict["run"])
+    allinputdata,alloutputdata,trainvaltest,experiment_dict["inputrun"])
 
 inputdata[:, np.isnan(np.mean(inputdata, axis=0))] = 0
 inputval[:, np.isnan(np.mean(inputval, axis=0))] = 0
@@ -94,6 +94,8 @@ outputtest = outputtest/outputstd
 outputdata[:, np.isnan(np.mean(outputdata, axis=0))] = 0
 outputval[:, np.isnan(np.mean(outputval, axis=0))] = 0
 outputtest[:, np.isnan(np.mean(outputtest, axis=0))] = 0  
+
+#%%
 
 patience = experiment_dict["patience"]
 batch_size = experiment_dict["batch_size"]
@@ -111,7 +113,7 @@ nvars = int(len(valvariants)*len(modellist))
 landmask = (np.mean(outputval,axis=0))!=0
 centre = (outbounds[2]+outbounds[3])/2
 latweights = np.sqrt(np.cos(np.deg2rad(np.meshgrid(lon,lat)[1])))
-# latweights[~landmask] = 0
+latweights[~landmask] = 0
 latweights = torch.tensor(latweights)
 
 nvariant = len(valvariants)
@@ -128,7 +130,8 @@ output_shape = outputdata.shape
 
 train_dataset = TensorDataset(inputdata_tensor, outputdata_tensor)
 train_loader = DataLoader(train_dataset, batch_size=experiment_dict["batch_size"], 
-                          shuffle=True)
+# latweights[~landmask] = 0
+                          shuffle=True,num_workers=0)
 
 val_dataset = TensorDataset(inputval_tensor, outputval_tensor)
 val_loader = DataLoader(val_dataset, batch_size=experiment_dict["batch_size"], shuffle=False)
@@ -163,6 +166,8 @@ def train_loop(dataloader, model, loss_fn):
         if batch % 100 == 0:
             loss, current = loss.item(), batch * batch_size + len(X)
             print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+
+    return loss
 
 
 def val_loop(dataloader, model, loss_fn):
@@ -224,22 +229,26 @@ for random_seed in seedlist:
 
     optimizer = optim.SGD(full_model.parameters(), 
                         lr=experiment_dict["learning_rate"],
-                        weight_decay=experiment_dict["ridgepen"])
+                        # weight_decay=experiment_dict["ridgepen"],
+                        )
 
     scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, threshold=1e-4, factor=0.1, patience=lr_patience, cooldown=0, min_lr=5e-6, verbose=True) 
-
-    loss = []
 
     best_val_loss = np.inf
     epochs_no_improve = 0
 
     epochs = experiment_dict["n_epochs"]
+
+    validvec = []
+    trainvec  = []
+
     for t in range(epochs):
         print(f"Epoch {t+1}\n-------------------------------")
         time1 = time.time()
-        train_loop(train_loader, full_model, loss_fn)
+        train_loss = train_loop(train_loader, full_model, loss_fn)
         valid_loss = val_loop(val_loader, full_model, loss_fn)
-        loss.append(valid_loss)
+        trainvec.append(train_loss.detach().numpy())
+        validvec.append(valid_loss)
         time2 = time.time()
         print(f"{time2-time1:4f} seconds per epoch")
         best_val_loss, earlystopping, epochs_no_improve = model_checkpoint(valid_loss,best_val_loss,epochs_no_improve,fileout)
@@ -247,4 +256,11 @@ for random_seed in seedlist:
             print(f'Early stopping after {t+1} epochs.')
             break
 
-
+    
+    # plt.figure(figsize=(5,3))
+    # plt.plot(trainvec)
+    # plt.plot(validvec)
+    # plt.xlabel('epoch')
+    # plt.ylabel('mse')
+    # plt.show()
+# %%

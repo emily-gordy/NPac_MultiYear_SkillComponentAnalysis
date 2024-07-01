@@ -53,19 +53,6 @@ def index_timeseries(data,pattern,landmask):
     
     return index
 
-def standardizations(outputval,y_pred_val,pattern,landmask):
-
-    patternnp = np.asarray(pattern)
-    patternvec = patternnp[landmask]
-    
-    index_val = (1/len(patternvec))*np.matmul(outputval[:,landmask],patternvec)
-    index_pred_val = (1/len(patternvec))*np.matmul(y_pred_val[:,landmask],patternvec)
-    
-    standardization_true = np.std(index_val)
-    standardization_pred = np.std(index_pred_val)  
-    
-    return standardization_true,standardization_pred
-
 def corr_indextimeseries(bestpattern,truedata,preddata,outputval,y_pred_val,landmask):
 
     # SCstd_true,SCstd_pred = standardizations(outputval,y_pred_val,bestpattern,landmask)

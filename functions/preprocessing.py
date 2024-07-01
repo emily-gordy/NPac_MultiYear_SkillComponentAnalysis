@@ -95,6 +95,14 @@ def pull_data_obs(var,source):
         ds = xr.open_dataset(file)
         da = ds["t2m"]
     
+    elif source == "HadCRUT":
+        filelist = glob.glob(path + "*" + source + "*.nc")
+        file = filelist[0]
+        print(file)
+        
+        ds = xr.open_dataset(file)
+        da = ds["tas_mean"]
+
     polys = da.polyfit(dim="time",deg=3)    
     coordout = da.time
     trend = xr.polyval(coord=coordout, coeffs=polys.polyfit_coefficients)
@@ -242,6 +250,47 @@ def make_inputoutput_obs(settings,source):
     
     return inputdata,outputdata
 
+def make_inputoutput_flexavg_obs(settings,source):
+    
+    inres = settings["inres"]
+    outres = settings["outres"]
+    leadtime = settings["leadtime"]
+    inbounds = settings["inbounds"]
+    outbounds = settings["outbounds"]
+    inputrun = settings["inputrun"]    
+    outputrun = settings["outputrun"]
+
+    # hard code year range for obs
+    year1 = 1870
+    year2 = 2022
+    
+    obsin = pull_data_obs(settings["varin"],source)
+    obsout = pull_data_obs(settings["varout"],source)
+    
+    obsin = obsin.rolling(year=inputrun,center=False).mean()
+    obsout = obsout.rolling(year=outputrun,center=False).mean()
+
+    if inres:
+        obsin = regrid(obsin,inres)
+    if outres:
+        obsout = regrid(obsout,outres)
+
+    if len(inbounds)==0:
+        inputdata = obsin.sel(year=slice(year1,year2-(leadtime+outputrun)))
+    else:
+        if inbounds[2]<0:
+            obsin.coords['lon'] = (obsin.coords['lon'] + 180) % 360 - 180
+            obsin = obsin.sortby(obsin.lon)
+
+        inputdata = obsin.sel(year=slice(year1,year2-(leadtime+outputrun)),lat=slice(inbounds[0],inbounds[1]),lon=slice(inbounds[2],inbounds[3]))
+    if outbounds[2]<0:
+        obsout.coords['lon'] = (obsout.coords['lon'] + 180) % 360 - 180
+        obsout = obsout.sortby(obsout.lon)
+
+    outputdata = obsout.sel(lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]),year=slice(year1+leadtime+inputrun+outputrun,year2))
+    
+    return inputdata,outputdata
+
 def concatobs(inputobs,outputobs,outputstd,run):
     
     inputobs = np.asarray(inputobs)
@@ -309,9 +358,9 @@ def make_inputoutput_modellist(settings):
             if inbounds[2]<0:
                 allensin.coords['lon'] = (allensin.coords['lon'] + 180) % 360 - 180
                 allensin = allensin.sortby(allensin.lon)
-                inputdata = allensin.sel(year=slice(year1,year2-(leadtime+2*run)),lat=slice(inbounds[0],inbounds[1]),lon=slice(inbounds[2],inbounds[3]))
+                inputdata = allensin.sel(year=slice(year1,year2-(leadtime+run)),lat=slice(inbounds[0],inbounds[1]),lon=slice(inbounds[2],inbounds[3]))
             else:
-                inputdata = allensin.sel(year=slice(year1,year2-(leadtime+2*run)),lat=slice(inbounds[0],inbounds[1]),lon=slice(inbounds[2],inbounds[3]))
+                inputdata = allensin.sel(year=slice(year1,year2-(leadtime+run)),lat=slice(inbounds[0],inbounds[1]),lon=slice(inbounds[2],inbounds[3]))
     
         if outbounds[2]<0:
             allensout.coords['lon'] = (allensout.coords['lon'] + 180) % 360 - 180
@@ -335,6 +384,72 @@ def make_inputoutput_modellist(settings):
     alloutputdata = alloutputdata.transpose("cmodel","variant","year","lat","lon")
     
     return allinputdata,alloutputdata
+
+def make_inputoutput_modellist_flexavg(settings):
+
+    allinputdata = []
+    alloutputdata = []
+    
+    modellist = settings["modellist"]
+    inres = settings["inres"]
+    outres = settings["outres"]
+    leadtime = settings["leadtime"]
+    inbounds = settings["inbounds"]
+    outbounds = settings["outbounds"]
+    inputrun = settings["inputrun"]
+    outputrun = settings["outputrun"]
+    # n_input = settings["n_input"]
+    
+    startyear = 1851 # start year for LEs
+    year1 = startyear+inputrun # first year with data after averaging
+    year2 = 2014 # last year with data
+    
+    for cmodel in modellist:
+        print(cmodel)
+        allensin = pull_data(settings["varin"],cmodel)
+        allensout = pull_data(settings["varout"],cmodel)
+    
+        allensin = allensin.rolling(year=inputrun,center=False).mean() # look BACK running mean
+        allensout = allensout.rolling(year=outputrun,center=False).mean()
+
+        if inres:
+            allensin = regrid(allensin,inres)
+        if outres:
+            allensout = regrid(allensout,outres)
+                    
+        if len(inbounds)==0:
+            inputdata = allensin.sel(year=slice(year1,year2-(leadtime+outputrun)))
+        else:
+            if inbounds[2]<0:
+                allensin.coords['lon'] = (allensin.coords['lon'] + 180) % 360 - 180
+                allensin = allensin.sortby(allensin.lon)
+                inputdata = allensin.sel(year=slice(year1,year2-(leadtime+outputrun)),lat=slice(inbounds[0],inbounds[1]),lon=slice(inbounds[2],inbounds[3]))
+            else:
+                inputdata = allensin.sel(year=slice(year1,year2-(leadtime+outputrun)),lat=slice(inbounds[0],inbounds[1]),lon=slice(inbounds[2],inbounds[3]))
+    
+        if outbounds[2]<0:
+            allensout.coords['lon'] = (allensout.coords['lon'] + 180) % 360 - 180
+            allensout = allensout.sortby(allensout.lon)
+            outputdata = allensout.sel(year=slice(year1+(leadtime+inputrun+outputrun),year2),lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]))
+        else:
+            outputdata = allensout.sel(year=slice(year1+(leadtime+inputrun+outputrun),year2),lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]))
+        
+        inputdata=inputdata.assign_coords({"cmodel":cmodel,
+                                           "variant":np.arange(30)})
+        outputdata=outputdata.assign_coords({"cmodel":cmodel,
+                                             "variant":np.arange(30)})
+    
+        allinputdata.append(inputdata)
+        alloutputdata.append(outputdata)
+    
+    allinputdata = xr.concat(allinputdata,dim="cmodel",coords='minimal')
+    alloutputdata = xr.concat(alloutputdata,dim="cmodel",coords='minimal')
+    
+    allinputdata = allinputdata.transpose("cmodel","variant","year","lat","lon")
+    alloutputdata = alloutputdata.transpose("cmodel","variant","year","lat","lon")
+    
+    return allinputdata,alloutputdata
+
 
 def splitandflatten(allinputdata,alloutputdata,variantsplit,run):
     
@@ -463,244 +578,6 @@ def splitandflatten_torch(allinputdata,alloutputdata,variantsplit,run):
     
     return inputtrain_flat,inputval_flat,inputtest_flat,outputtrain_flat,outputval_flat,outputtest_flat
 
-
-def PDO_pattern_allmodels(settings):
-    
-    # PDO pattern calculated across all models in the validation set
-    
-    PDObounds = [20,60,110,260]
-    valvariants = settings["valvariants"]
-    modellist = settings["modellist"]
-    outbounds = settings["outbounds"]
-    outres = settings["outres"]
-    
-    allinputdata = []
-    allglob = []
-    
-    for im,cmodel in enumerate(modellist):
-        print(cmodel)
-        allensin = pull_data_monthly("tos",cmodel) # all data
-        allensglob = allensin.sel(time=slice("1851","2014")).isel(variant=valvariants) # global SST
-        #NPac only for PDO calc
-        allensin = allensin.sel(lat=slice(PDObounds[0],PDObounds[1]),lon=slice(PDObounds[2],PDObounds[3]),time=slice("1851","2014")).isel(variant=valvariants)
-        
-        if im == 0: # impose standard datetime format on ALL models
-            timefix = allensin.time
-        
-        allensin = allensin.assign_coords({"cmodel":cmodel,
-                                           "variant":np.arange(len(valvariants)),
-                                           "time":timefix})   
-        allensglob = allensglob.assign_coords({"cmodel":cmodel,
-                                           "variant":np.arange(len(valvariants)),
-                                           "time":timefix})                       
-        
-        allinputdata.append(allensin)
-        allglob.append(allensglob)
-    
-    # data for PDO calc
-    allinputdata = xr.concat(allinputdata,dim="cmodel",coords='minimal')
-    allinputdata = allinputdata.transpose("cmodel","variant","time","lat","lon")
-    
-    # data to project PDO onto
-    allglob = xr.concat(allglob,dim="cmodel",coords='minimal')
-    allglob = allglob.transpose("cmodel","variant","time","lat","lon")
-    
-    # North Pacific coords    
-    Paclat = allensin.lat
-    Paclon = allensin.lon
-
-    # Global SST coords            
-    alllat = allensglob.lat
-    alllon = allensglob.lon
-    
-    time = allinputdata.time
-    variant = allinputdata.variant
-    
-    # weight NPac data by sqrt(cos(latitidue))
-    Paclonxlat = np.meshgrid(Paclon,Paclat)[1]
-    Pacweights = np.sqrt(np.cos(Paclonxlat*np.pi/180))
-
-    PacificSST = np.squeeze(np.asarray(allinputdata))
-    print("np conversion done")
-    
-    NPacshape = PacificSST.shape
-
-    # flatten and weight
-    PacificSST_flat = np.reshape(PacificSST,(len(variant)*len(time)*len(modellist),NPacshape[3],NPacshape[4]))
-    PacificSSTw = PacificSST_flat*Pacweights[np.newaxis,:,:]
-    # and remove land data
-    Pacnoland = PacificSSTw[:,~np.isnan(np.mean(PacificSST_flat,axis=0))]
-    
-    # take covariance, do it lazily bc we only want 1st eigen value
-    PacCov = np.cov(np.transpose(Pacnoland))
-    PacCov_s = sparse.csc_matrix(PacCov)
-    
-    # get evec corresponding to highest eigen value (EOF)
-    eigval,evec = eigs(PacCov_s,1)
-    evec = np.squeeze(np.real(evec))
-    
-    print("eof done")
-    
-    if np.sum(evec)>0: # lil correction to get the right sign PDO
-        evec = -1*evec
-    
-    # calculate PDO index, standardize and reshape to model x ensemble member x time
-    PDOindex = np.matmul(Pacnoland,evec)
-    PDOindex = (PDOindex-np.mean(PDOindex))/np.std(PDOindex)
-    PDOindex = np.reshape(PDOindex,(len(modellist),len(valvariants),len(time)))
-    
-    da_PDO = xr.DataArray(
-        data=PDOindex,
-        dims=["cmodel","variant","time"],
-        coords=dict(            
-            cmodel=modellist,
-            time=time,
-            variant=variant,
-        ),
-        attrs=dict(
-            description="PDOindex",
-            units="covariance",
-        ),
-    )
-    
-    print("index calculated")
-    
-    # project PDO index onto global SST
-    globEOF = da_PDO * allglob
-    globEOF = globEOF.mean(dim=("time","variant","cmodel"))
-    
-    print("global pattern calculated")
-    
-    da_EOF = xr.DataArray(
-        data=globEOF,
-        dims=["lat","lon"],
-        coords={"lat":alllat,
-                "lon":alllon,
-                })
-    
-    # regrid and cut pattern to fit experiment domain
-    
-    if outres:
-        outgrid = xr.Dataset(
-        {
-                "lat": (["lat"], np.arange(-90+outres/2,90+outres/2, outres), {"units": "degrees_north"}),
-                "lon": (["lon"], np.arange(0+outres/2, 360+outres/2, outres), {"units": "degrees_east"}),
-        }
-        )
-        
-        regridder = xe.Regridder(da_EOF, outgrid, "bilinear", periodic=False, ignore_degenerate=True)
-        da_EOF = regridder(da_EOF,keep_attrs=True) 
-    
-        print('regridded (if necessary)')
-    
-    if outbounds:
-        da_EOF = da_EOF.sel(lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]))
-    
-    PDOpattern = np.asarray(da_EOF)
-
-    return PDOpattern
-
-def PDO_pattern_singlemodel(settings):
-    
-    # PDO index calculated individually for each model in the validation set, 
-    # Index timeseries to correspond to the outputs of the neural network
-    
-    PDObounds = [20,60,110,260]
-    valvariants = settings["valvariants"]
-    modellist = settings["modellist"]
-    outbounds = settings["outbounds"]
-    outres = settings["outres"]
-    
-    PDOpatterns = []
-    
-    for cmodel in modellist:
-        print(cmodel)
-        allensin = pull_data_monthly("tos",cmodel)
-        allensglob = allensin.isel(variant=valvariants)
-        allensin = allensin.sel(lat=slice(PDObounds[0],PDObounds[1]),lon=slice(PDObounds[2],PDObounds[3])).isel(variant=valvariants)
-        
-        Paclat = allensin.lat
-        Paclon = allensin.lon
-        alllat = allensglob.lat
-        alllon = allensglob.lon
-        time = allensin.time
-        variant = allensin.variant
-
-        Paclonxlat = np.meshgrid(Paclon,Paclat)[1]
-        Pacweights = np.sqrt(np.cos(Paclonxlat*np.pi/180))
-    
-        PacificSST = np.squeeze(np.asarray(allensin))
-        NPacshape = PacificSST.shape
-
-        PacificSST_flat = np.reshape(PacificSST,(len(valvariants)*len(time),NPacshape[2],NPacshape[3]))
-
-        PacificSSTw = PacificSST_flat*Pacweights[np.newaxis,:,:]
-    
-        Pacnoland = PacificSSTw[:,~np.isnan(PacificSST_flat[0,:,:])]
-        PacCov = np.cov(np.transpose(Pacnoland))
-    
-        PacCov_s = sparse.csc_matrix(PacCov)
-    
-        eigval,evec = eigs(PacCov_s,1)
-        evec = np.squeeze(np.real(evec))
-        
-        print("eof done")
-        
-        if np.sum(evec)>0:
-            evec = -1*evec
-            
-        PDOindex = np.matmul(Pacnoland,evec)
-        PDOindex = np.reshape(PDOindex,(len(valvariants),len(time)))
-        
-        PDOindex = (PDOindex-np.mean(PDOindex))/np.std(PDOindex)
-        
-        da_PDO = xr.DataArray(
-            data=PDOindex,
-            dims=["variant","time"],
-            coords=dict(
-                time=time,
-                variant=variant,
-            ),
-            attrs=dict(
-                description="PDOindex",
-                units="covariance",
-            ),
-        )
-        
-        da_PDO = da_PDO.assign_coords({"cmodel":cmodel})
-        
-        globEOF = da_PDO * allensglob
-        globEOF = globEOF.mean(dim=("time","variant"))
-        
-        da_EOF = xr.DataArray(
-            data=globEOF,
-            dims=["lat","lon"],
-            coords={"lat":alllat,
-                    "lon":alllon,
-                    "cmodel":cmodel})
-    
-        if outres:
-            outgrid = xr.Dataset(
-            {
-                "lat": (["lat"], np.arange(-90+outres/2,90+outres/2, outres), {"units": "degrees_north"}),
-                "lon": (["lon"], np.arange(0+outres/2, 360+outres/2, outres), {"units": "degrees_east"}),
-            }
-            )
-            
-            regridder = xe.Regridder(da_EOF, outgrid, "bilinear", periodic=True, ignore_degenerate=True)
-            da_EOF = regridder(da_EOF,keep_attrs=True) 
-            
-        if outbounds:
-            da_EOF = da_EOF.sel(lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]))
-        
-        PDOpatterns.append(da_EOF)
-
-    PDOpatterns = xr.concat(PDOpatterns,dim="cmodel")
-    
-    PDOpatterns = np.asarray(PDOpatterns.transpose("cmodel","lat","lon"))
-    
-    return PDOpatterns
-
 def PDOobs(settings,source):
     
     year1 = 1870
@@ -710,8 +587,6 @@ def PDOobs(settings,source):
     
     outres = settings["outres"]
     outbounds = settings["outbounds"]
-    run = settings["run"]
-    run=run*12
     
     allensin = pull_data_obs_PDOdemean(settings["varout"],source)
     allensin = allensin.sel(time=slice(str(year1),str(year2)))
@@ -806,6 +681,42 @@ def makeoutputonly_obs(settings,source,outbounds):
 
     return outputdata
 
+def makeoutputonly_obs_flexavg(settings,source,outbounds,outres):
+
+    # make data corresponding to CNN output for specified variable and region
+    
+    leadtime = settings["leadtime"]
+    outputrun = settings["outputrun"]    
+    inputrun = settings["inputrun"]
+    
+    # hard code year range for obs
+    year1 = 1870
+    year2 = 2022
+    
+    obsout = pull_data_obs(settings["varout"],source)
+    
+    obsout = obsout.rolling(year=outputrun,center=False).mean()
+
+    if outres:
+        obsout = regrid(obsout,outres)
+
+    if outbounds[2]<0:
+        obsout.coords['lon'] = (obsout.coords['lon'] + 180) % 360 - 180
+        obsout = obsout.sortby(obsout.lon)
+
+    if "SST" in source:
+        outputdata = obsout.sel(lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]),year=slice(year1+leadtime+inputrun+outputrun,year2))
+    elif "ERA5" == source:
+        # hard code ERA5 bounds
+        outputdata = obsout.sel(lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]),year=slice(1940+outputrun,year2))
+
+    elif "HadCRUT" == source:
+        if outres<5:
+            print("min resolution of HadCRUT is 5 soz")
+        outputdata = obsout.sel(lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]),year=slice(1910+outputrun,year2))
+
+    return outputdata
+
 def makeoutputonly_modellist_emeandetrend(settings,outbounds):
 
     alloutputdata = []
@@ -839,6 +750,49 @@ def makeoutputonly_modellist_emeandetrend(settings,outbounds):
             outputdata = allensout.sel(year=slice(year1+(leadtime+2*run),year2),lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]))
         else:
             outputdata = allensout.sel(year=slice(year1+(leadtime+2*run),year2),lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]))
+
+        alloutputdata[imodel] = np.squeeze(np.asarray(outputdata))
+        
+        t2 = time.time()
+        
+        print("elapsed time = %f" %(t2-t1))
+    
+    return alloutputdata
+
+def makeoutputonly_modellist_emeandetrend_flexavg(settings,outbounds):
+
+    alloutputdata = []
+    
+    modellist = settings["modellist"]
+    outres = settings["outres"]
+    leadtime = settings["leadtime"]
+
+    outputrun = settings["outputrun"]
+    inputrun = settings["inputrun"]
+    # n_input = settings["n_input"]
+    
+    startyear = 1851 # start year for LEs
+    year1 = startyear+inputrun # first year with data
+    year2 = 2014 # last year with data
+
+    alloutputdata = np.empty((9,7,149,45,90))
+    
+    for imodel,cmodel in enumerate(modellist):
+        t1 = time.time()
+        print(cmodel)
+        allensout = pull_data(settings["varout"],cmodel)
+        allensout = allensout[23:30,:,:,:]
+        allensout = allensout.rolling(year=outputrun,center=False).mean()
+
+        if outres:
+            allensout = regrid(allensout,outres)
+                    
+        if outbounds[2]<0:
+            allensout.coords['lon'] = (allensout.coords['lon'] + 180) % 360 - 180
+            allensout = allensout.sortby(allensout.lon)
+            outputdata = allensout.sel(year=slice(year1+(leadtime+outputrun+inputrun),year2),lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]))
+        else:
+            outputdata = allensout.sel(year=slice(year1+(leadtime+outputrun+inputrun),year2),lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]))
 
         alloutputdata[imodel] = np.squeeze(np.asarray(outputdata))
         
@@ -890,6 +844,51 @@ def makeoutputonly_modellist_polydetrend(settings,outbounds):
         print("elapsed time = %f" %(t2-t1))
         
     return alloutputdata
+
+def makeoutputonly_modellist_polydetrend_flexavg(settings,outbounds):
+        
+    alloutputdata = []
+    
+    modellist = settings["modellist"]
+    outres = settings["outres"]
+    leadtime = settings["leadtime"]
+
+    inputrun = settings["inputrun"]
+    outputrun = settings["outputrun"]
+    
+    startyear = 1851 # start year for LEs
+    year1 = startyear+inputrun # first year with data
+    year2 = 2014 # last year with data
+    
+    alloutputdata = np.empty((9,7,149,45,90))
+    
+    for imodel,cmodel in enumerate(modellist):
+        
+        t1 = time.time()
+        
+        print(cmodel)
+        allensout = pull_data_polydetrend(settings["varout"],cmodel)
+    
+        allensout = allensout.rolling(year=outputrun,center=False).mean()
+
+        if outres:
+            allensout = regrid(allensout,outres)
+                    
+        if outbounds[2]<0:
+            allensout.coords['lon'] = (allensout.coords['lon'] + 180) % 360 - 180
+            allensout = allensout.sortby(allensout.lon)
+            outputdata = allensout.sel(year=slice(year1+(leadtime+inputrun+outputrun),year2),lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]))
+        else:
+            outputdata = allensout.sel(year=slice(year1+(leadtime+inputrun+outputrun),year2),lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]))
+
+        alloutputdata[imodel] = np.squeeze(np.asarray(outputdata))    
+        
+        t2 = time.time()
+        
+        print("elapsed time = %f" %(t2-t1))
+        
+    return alloutputdata
+
 
 
 

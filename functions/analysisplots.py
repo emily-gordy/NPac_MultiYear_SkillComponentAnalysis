@@ -33,14 +33,11 @@ def patternplots_SST(bestpattern,PDOpattern,truedata,preddata,outputval,y_pred_v
     
     continents = "gray"
     
-    SCstd_true,SCstd_pred = allthelinalg.standardizations(outputval,y_pred_val,bestpattern,landmask)
-    PDOstd_true,PDOstd_pred = allthelinalg.standardizations(outputval,y_pred_val,PDOpattern,landmask)
+    SC_index_true = allthelinalg.index_timeseries(truedata,bestpattern,landmask)
+    SC_index_pred = allthelinalg.index_timeseries(preddata,bestpattern,landmask)
     
-    SC_index_true = allthelinalg.index_timeseries(truedata,bestpattern,landmask)#/SCstd_true
-    SC_index_pred = allthelinalg.index_timeseries(preddata,bestpattern,landmask)#/SCstd_pred
-    
-    PDOindex_true = allthelinalg.index_timeseries(truedata,PDOpattern,landmask)#/PDOstd_true
-    PDOindex_pred = allthelinalg.index_timeseries(preddata,PDOpattern,landmask)#/PDOstd_pred
+    PDOindex_true = allthelinalg.index_timeseries(truedata,PDOpattern,landmask)
+    PDOindex_pred = allthelinalg.index_timeseries(preddata,PDOpattern,landmask)
     
     bestpatternplot = np.mean(truedata*SC_index_true[:,np.newaxis,np.newaxis],axis=0)
     PDOpatternplot = np.mean(truedata*PDOindex_true[:,np.newaxis,np.newaxis],axis=0)
@@ -362,8 +359,6 @@ def bestpatternplot_poster(bestpattern,truedata,preddata,outputval,y_pred_val,la
     transform = ccrs.PlateCarree()
     
     continents = "gray"
-    
-    SCstd_true,SCstd_pred = allthelinalg.standardizations(outputval,y_pred_val,bestpattern,landmask)
     
     SC_index_true = allthelinalg.index_timeseries(truedata,bestpattern,landmask)#/SCstd_true
     SC_index_pred = allthelinalg.index_timeseries(preddata,bestpattern,landmask)#/SCstd_pred

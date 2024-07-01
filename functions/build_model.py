@@ -142,7 +142,7 @@ class CNN(nn.Module):
             self.dense_layers.append(nn.Dropout(self.dropout_rate))
 
         self.output_layer = nn.Linear(self.hiddens[-1], self.outputshape_flat)
-        nn.init.zeros_(self.output_layer.weight)
+        # nn.init.zeros_(self.output_layer.weight)
 
     def forward(self, x):
         for layer in self.conv_layers:
@@ -175,4 +175,6 @@ def reduce_pool(inputshape,filters,pools):
         dimreduce.append([filters[i+1],dimreduce[i][1]//pools[i+1],dimreduce[i][2]//pools[i+1]])
 
     return dimreduce[-1]
+
+
 
