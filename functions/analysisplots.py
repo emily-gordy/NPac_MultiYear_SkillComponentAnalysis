@@ -120,7 +120,112 @@ def patternplots_SST(bestpattern,PDOpattern,truedata,preddata,outputval,y_pred_v
     # plt.savefig("figures/" +title+"_patternscatterline.png",dpi=300)
     
     plt.show()
+
+def patternplots_SST_predrange(bestpattern,PDOpattern,truedata,preddata,predrange,landmask,lon,lat,yearvec,title,outputstd):
     
+    centre = np.asarray((lon[0]+lon[-1])/2)
+    projection = ccrs.EqualEarth(central_longitude=centre)
+    transform = ccrs.PlateCarree()
+    
+    continents = "gray"
+    
+    SC_index_true = allthelinalg.index_timeseries(truedata,bestpattern,landmask)
+    SC_index_pred = allthelinalg.index_timeseries(preddata,bestpattern,landmask)
+    
+    PDOindex_true = allthelinalg.index_timeseries(truedata,PDOpattern,landmask)
+    PDOindex_pred = allthelinalg.index_timeseries(preddata,PDOpattern,landmask)
+    
+    bestpatternplot = np.mean(truedata*SC_index_true[:,np.newaxis,np.newaxis],axis=0)
+    PDOpatternplot = np.mean(truedata*PDOindex_true[:,np.newaxis,np.newaxis],axis=0)
+    
+    bestpatternplot = bestpatternplot*np.squeeze(outputstd)
+    PDOpatternplot = PDOpatternplot*np.squeeze(outputstd)
+
+    if len(predrange.shape)==3:    
+        maxpred = np.max(predrange,axis=(0,1))
+        minpred = np.min(predrange,axis=(0,1))
+
+    elif len(predrange.shape)==2:
+        maxpred = np.max(predrange,axis=0)
+        minpred = np.min(predrange,axis=0)
+
+    cc_SC,_ = pearsonr(SC_index_true,SC_index_pred)
+    cc_PDO,_ = pearsonr(PDOindex_true,PDOindex_pred)
+    
+    plt.figure(figsize=(19,8))
+    
+    a1=plt.subplot(2,3,1,projection=projection)
+    a1.pcolormesh(lon,lat,bestpatternplot,vmin=-0.6,vmax=0.6,cmap="cmr.fusion_r",transform=transform)
+    c1=a1.contourf(lon,lat,bestpatternplot,np.arange(-0.6,0.65,0.05),cmap="cmr.fusion_r",transform=transform,extend='both')
+    a1.add_feature(cfeature.NaturalEarthFeature('physical', 'land', '50m', edgecolor='face', facecolor=continents))
+    cbar1=plt.colorbar(c1,location='bottom')
+    cbar1.ax.set_xlabel(r'SST ($^{\circ}$C)')
+    cbar1.ax.set_xticks(np.arange(-0.6,0.8,0.2))
+    plt.title(title + ' first skill component pattern')
+    plt.text(0.02,1.18,"a.",transform=a1.transAxes,fontsize=18,weight='bold')
+    
+    a2=plt.subplot(2,3,2)
+    c=plt.scatter(SC_index_true,SC_index_pred,c=yearvec,cmap=cmr.ember)
+    plt.plot(np.arange(-2,3),np.arange(-2,3),color='xkcd:slate grey')
+    plt.text(-2.5,2,"r = %.4f" %(cc_SC))
+    plt.xlabel('true skill component index')
+    plt.ylabel('pred skill component index')
+    plt.xlim(-3,3)
+    plt.ylim(-3,3)
+    cbarscat1=plt.colorbar(c)
+    cbarscat1.ax.set_ylabel('year')
+    plt.text(0.02,0.92,"b.",transform=a2.transAxes,fontsize=18,weight='bold')
+    
+    a3=plt.subplot(2,3,3)
+    plt.fill_between(yearvec,minpred,maxpred,color="xkcd:teal",alpha=0.2)
+    plt.plot(yearvec,SC_index_true,color='xkcd:slate grey',label='true')
+    plt.plot(yearvec,SC_index_pred,color='xkcd:teal',label='pred')
+    plt.ylim(-3,3)
+    plt.xlim(yearvec[0],yearvec[-1])
+    plt.legend()
+    plt.ylabel('skill component index')
+    plt.xlabel('year')
+    plt.text(0.02,0.92,"c.",transform=a3.transAxes,fontsize=18,weight='bold')
+
+    a4=plt.subplot(2,3,4,projection=projection)
+    a4.pcolormesh(lon,lat,PDOpatternplot,vmin=-0.6,vmax=0.6,cmap="cmr.fusion_r",transform=transform)
+    c4=a4.contourf(lon,lat,PDOpatternplot,np.arange(-0.6,0.65,0.05),cmap="cmr.fusion_r",transform=transform,extend='both')
+    a4.add_feature(cfeature.NaturalEarthFeature('physical', 'land', '50m', edgecolor='face', facecolor=continents))
+    cbar4=plt.colorbar(c4,location='bottom')
+    cbar4.ax.set_xlabel(r'SST ($^{\circ}$C)')
+    cbar4.ax.set_xticks(np.arange(-0.6,0.8,0.2))
+    plt.title(title + ' PDO pattern')
+    plt.text(0.02,1.18,"d.",transform=a4.transAxes,fontsize=18,weight='bold')
+    
+    a5=plt.subplot(2,3,5)
+    c=plt.scatter(PDOindex_true,PDOindex_pred,c=yearvec,cmap=cmr.ember)
+    plt.plot(np.arange(-2,3),np.arange(-2,3),color='xkcd:slate grey')
+    plt.xlabel('true PDO index')
+    plt.ylabel('pred PDO index')
+    plt.text(-2.5,2.1,"r = %.4f" %(cc_PDO))
+    plt.xlim(-3,3)
+    plt.ylim(-3,3)
+    cbarscat2=plt.colorbar(c)
+    cbarscat2.ax.set_ylabel('year')
+    plt.text(0.02,0.92,"e.",transform=a5.transAxes,fontsize=18,weight='bold')    
+    
+    a6=plt.subplot(2,3,6)
+    plt.plot(yearvec,PDOindex_true,color='xkcd:slate grey',label='true')
+    plt.plot(yearvec,PDOindex_pred,color='xkcd:teal',label='pred')
+    # plt.legend()
+    plt.ylabel('PDO index')
+    plt.xlabel('year')
+    plt.ylim(-3,3)
+    plt.xlim(yearvec[0],yearvec[-1])
+    plt.text(0.02,0.92,"f.",transform=a6.transAxes,fontsize=18,weight='bold')    
+    # plt.suptitle(title,fontsize=30)
+
+    plt.tight_layout
+
+    # plt.savefig("figures/" +title+"_patternscatterline.png",dpi=300)
+    
+    plt.show()
+
 def plotpattern(pattern,lon,lat):
     plt.figure(figsize=(8,3))
 
@@ -448,3 +553,45 @@ def prettyscatterplot_supp(modeldata,obsval,modellist,testvariants,ylabel,obslab
     if savestr:
         plt.savefig(savestr,dpi=300)
     plt.show()
+
+def varexplained(y_pred,output,pattern,griddeddata,landmask,latvec,lonvec):
+
+    transform = ccrs.PlateCarree()
+
+    nlatbig = len(latvec)
+    nlonbig = len(lonvec)
+
+    SCtimeseries = allthelinalg.index_timeseries(output,pattern,landmask)
+    SCtimeseries_pred = allthelinalg.index_timeseries(y_pred,pattern,landmask)
+
+    R_out = np.empty((nlatbig,nlonbig))
+
+    for ilat in range(nlatbig):
+        for ilon in range(nlonbig):
+            R_out[ilat,ilon],_ = pearsonr(SCtimeseries,griddeddata[:,ilat,ilon])  
+
+    R_out[np.isnan(R_out)] = 0
+
+    lbound = 0
+    ubound = 0.8
+
+    cmapinc = cmr.ember
+    bounds = np.arange(lbound,ubound+0.05,0.05)
+    norm = colors.BoundaryNorm(boundaries=bounds, ncolors=cmapinc.N)
+
+    plt.figure(figsize=(8,7))
+
+    a1=plt.subplot(1,1,1,projection=ccrs.EqualEarth(central_longitude=255))
+    c=a1.pcolormesh(lonvec,latvec,R_out**2,norm=norm,cmap='inferno',transform=transform)
+    a1.coastlines(color='gray')
+    a1.add_feature(cfeature.NaturalEarthFeature('physical', 'land', '50m', edgecolor='face', facecolor='grey'))
+
+    cax=plt.axes((0.2,0.2,0.6,0.03))
+    cbar=plt.colorbar(c,cax=cax,orientation='horizontal')
+    cbar.ax.set_xlabel(r'R$^2$')
+    plt.tight_layout()
+
+    plt.savefig("figures/varexplained.png")
+
+    plt.show()           
+

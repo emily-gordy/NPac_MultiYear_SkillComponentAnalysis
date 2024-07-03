@@ -72,7 +72,7 @@ def pull_data_obs(var,source):
     
     if source == "ERSST":
     
-        filelist = glob.glob(path + "*" + source + "*2x2*.nc")
+        filelist = glob.glob(path + "*" + source + "*2x2*v2.nc")
         file = filelist[0]
         
         ds = xr.open_dataset(file)
@@ -80,7 +80,7 @@ def pull_data_obs(var,source):
         
     elif source == "HadISST":
     
-        filelist = glob.glob(path + "*" + source + "*2x2*.nc")
+        filelist = glob.glob(path + "*" + source + "*2x2*2024.nc")
         file = filelist[0]
         
         ds = xr.open_dataset(file)
@@ -103,13 +103,15 @@ def pull_data_obs(var,source):
         ds = xr.open_dataset(file)
         da = ds["tas_mean"]
 
-    polys = da.polyfit(dim="time",deg=3)    
-    coordout = da.time
+    da = da.groupby("time.year").mean()
+
+    polys = da.polyfit(dim="year",deg=3)    
+    coordout = da.year
     trend = xr.polyval(coord=coordout, coeffs=polys.polyfit_coefficients)
     
     da_anom = da-trend
 
-    da_anom = da_anom.groupby("time.year").mean() # annual means
+    # da_anom = da_anom.groupby("time.year").mean() # annual means
 
     return da_anom
 
@@ -117,14 +119,14 @@ def pull_data_obs_PDOdemean(var,source):
     
     if source == "ERSST":
     
-        filelist = glob.glob(path + "*" + source + "*2x2*.nc")
+        filelist = glob.glob(path + "*" + source + "*2x2*v2.nc")
         file = filelist[0]
         
         ds = xr.open_dataset(file)
         da = ds["sst"]
     elif source == "HadISST":
     
-        filelist = glob.glob(path + "*" + source + "*2x2*.nc")
+        filelist = glob.glob(path + "*" + source + "*2x2*2024.nc")
         file = filelist[0]
         
         ds = xr.open_dataset(file)
@@ -221,7 +223,7 @@ def make_inputoutput_obs(settings,source):
     
     # hard code year range for obs
     year1 = 1870
-    year2 = 2022
+    year2 = 2023
     
     obsin = pull_data_obs(settings["varin"],source)
     obsout = pull_data_obs(settings["varout"],source)
@@ -262,7 +264,7 @@ def make_inputoutput_flexavg_obs(settings,source):
 
     # hard code year range for obs
     year1 = 1870
-    year2 = 2022
+    year2 = 2023
     
     obsin = pull_data_obs(settings["varin"],source)
     obsout = pull_data_obs(settings["varout"],source)
@@ -581,7 +583,7 @@ def splitandflatten_torch(allinputdata,alloutputdata,variantsplit,run):
 def PDOobs(settings,source):
     
     year1 = 1870
-    year2 = 2020
+    year2 = 2023
     
     bounds = [20,60,110,260]
     
@@ -660,7 +662,7 @@ def makeoutputonly_obs(settings,source,outbounds):
     
     # hard code year range for obs
     year1 = 1870
-    year2 = 2022
+    year2 = 2023
     
     obsout = pull_data_obs(settings["varout"],source)
     
@@ -680,6 +682,36 @@ def makeoutputonly_obs(settings,source,outbounds):
         outputdata = obsout.sel(lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]),year=slice(1944,year2))
 
     return outputdata
+
+def make_inputonly_obs(settings,source):
+    
+    inres = settings["inres"]
+    outres = settings["outres"]
+    leadtime = settings["leadtime"]
+    inbounds = settings["inbounds"]
+    run = settings["run"]    
+    
+    # hard code year range for obs
+    year1 = 1870
+    year2 = 2023
+    
+    obsin = pull_data_obs(settings["varin"],source)
+    
+    obsin = obsin.rolling(year=run,center=False).mean()
+
+    if inres:
+        obsin = regrid(obsin,inres)
+
+    if len(inbounds)==0:
+        inputdata = obsin.sel(year=slice(year1,year2))
+    else:
+        if inbounds[2]<0:
+            obsin.coords['lon'] = (obsin.coords['lon'] + 180) % 360 - 180
+            obsin = obsin.sortby(obsin.lon)
+
+        inputdata = obsin.sel(year=slice(year1,year2),lat=slice(inbounds[0],inbounds[1]),lon=slice(inbounds[2],inbounds[3]))
+    
+    return inputdata
 
 def makeoutputonly_obs_flexavg(settings,source,outbounds,outres):
 

@@ -37,7 +37,7 @@ plt.rcParams.update(params)
 # %% load and preprocess data
 
 modelpath = "models/"
-experiment_name = "allcmodel-tos_allcmodel-tos_2-9yearlead"
+experiment_name = "allcmodel-tos_allcmodel-tos_2-9yearlead_flexavg"
 experiment_dict = experiment_settings.get_experiment_settings(experiment_name)
 
 filefront = experiment_dict["filename"]
@@ -70,7 +70,7 @@ else:
     alloutputdata = datamat["alloutputdata"]
 
 inputdata,inputval,inputtest,outputdata,outputval,outputtest = preprocessing.splitandflatten(
-    allinputdata,alloutputdata,trainvaltest,experiment_dict["run"])
+    allinputdata,alloutputdata,trainvaltest,experiment_dict["inputrun"])
 
 inputdata[:, np.isnan(np.mean(inputdata, axis=0))] = 0
 inputval[:, np.isnan(np.mean(inputval, axis=0))] = 0
@@ -188,4 +188,4 @@ for random_seed in seedlist:
         
 
 
-
+# %%
