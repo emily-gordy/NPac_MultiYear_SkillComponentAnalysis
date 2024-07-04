@@ -21,7 +21,7 @@ def index_timeseries(data,pattern,landmask):
     
     return index
 
-def corr_indextimeseries(bestpattern,truedata,preddata,outputval,y_pred_val,landmask):
+def corr_indextimeseries(bestpattern,truedata,preddata,landmask):
 
     SC_index_true = index_timeseries(truedata,bestpattern,landmask)
     SC_index_pred = index_timeseries(preddata,bestpattern,landmask)
