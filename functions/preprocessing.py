@@ -222,7 +222,10 @@ def make_inputoutput_obs(settings,source):
     run = settings["run"]    
     
     # hard code year range for obs
-    year1 = 1870
+    if source == "ERSST":
+        year1 = 1854+settings["run"]
+    elif source == "HadISST":
+        year1 = 1870+settings["run"]
     year2 = 2023
     
     obsin = pull_data_obs(settings["varin"],source)
@@ -263,7 +266,10 @@ def make_inputoutput_flexavg_obs(settings,source):
     outputrun = settings["outputrun"]
 
     # hard code year range for obs
-    year1 = 1870
+    if source == "ERSST":
+        year1 = 1854+inputrun
+    elif source == "HadISST":
+        year1 = 1870+inputrun
     year2 = 2023
     
     obsin = pull_data_obs(settings["varin"],source)
@@ -582,7 +588,10 @@ def splitandflatten_torch(allinputdata,alloutputdata,variantsplit,run):
 
 def PDOobs(settings,source):
     
-    year1 = 1870
+    if source == "ERSST":
+        year1 = 1854+settings["run"]
+    elif source == "HadISST":
+        year1 = 1870+settings["run"]
     year2 = 2023
     
     bounds = [20,60,110,260]
@@ -661,7 +670,10 @@ def makeoutputonly_obs(settings,source,outbounds):
     run = settings["run"]    
     
     # hard code year range for obs
-    year1 = 1870
+    if source == "ERSST":
+        year1 = 1854+settings["run"]
+    elif source == "HadISST":
+        year1 = 1870+settings["run"]
     year2 = 2023
     
     obsout = pull_data_obs(settings["varout"],source)
@@ -692,7 +704,10 @@ def make_inputonly_obs(settings,source):
     run = settings["run"]    
     
     # hard code year range for obs
-    year1 = 1870
+    if source == "ERSST":
+        year1 = 1854+settings["run"]
+    elif source == "HadISST":
+        year1 = 1870+settings["run"]
     year2 = 2023
     
     obsin = pull_data_obs(settings["varin"],source)
@@ -722,8 +737,11 @@ def makeoutputonly_obs_flexavg(settings,source,outbounds,outres):
     inputrun = settings["inputrun"]
     
     # hard code year range for obs
-    year1 = 1870
-    year2 = 2022
+    if source == "ERSST":
+        year1 = 1854+settings["run"]
+    elif source == "HadISST":
+        year1 = 1870+settings["run"]
+    year2 = 2023
     
     obsout = pull_data_obs(settings["varout"],source)
     

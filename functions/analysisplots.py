@@ -25,7 +25,7 @@ import cmasher as cmr
 
 import allthelinalg
 
-def patternplots_SST(bestpattern,PDOpattern,truedata,preddata,outputval,y_pred_val,landmask,lon,lat,yearvec,title,outputstd):
+def patternplots_SST(bestpattern,PDOpattern,truedata,preddata,landmask,lon,lat,yearvec,title,outputstd):
     
     centre = np.asarray((lon[0]+lon[-1])/2)
     projection = ccrs.EqualEarth(central_longitude=centre)
