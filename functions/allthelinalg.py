@@ -61,6 +61,10 @@ def calculate_SC_weighted(y_pred_val,outputval,landmask,weights):
     
     return bestpattern_out
 
+def mse(xpred,xtrue):
+
+    return np.mean((xpred-xtrue)**2)
+
 def some_simple_models(y_pred_test,outputtest,trainingval,bestpattern,landmask,lat,lon,run):
 
     a_SST = np.empty((len(lat),len(lon)))
@@ -75,6 +79,9 @@ def some_simple_models(y_pred_test,outputtest,trainingval,bestpattern,landmask,l
     outputobs_ACC_raw = np.empty((len(lat),len(lon)))
     persistence = np.empty((len(lat),len(lon)))
 
+    MSSS_raw = np.empty((len(lat),len(lon)))
+    MSSS_SC = np.empty((len(lat),len(lon)))
+
     for ilat,_ in enumerate(lat):
         for ilon,_ in enumerate(lon):
 
@@ -85,4 +92,9 @@ def some_simple_models(y_pred_test,outputtest,trainingval,bestpattern,landmask,l
             outputobs_ACC_raw[ilat,ilon],_ = pearsonr(outputtest[:,ilat,ilon],y_pred_test[:,ilat,ilon])
             persistence[ilat,ilon],_ = pearsonr(outputtest[:-run,ilat,ilon],outputtest[run:,ilat,ilon])
 
-    return outputobs_pred,outputobs_ACC,outputobs_ACC_raw,persistence
+            MSSS_raw[ilat,ilon] = 1-(mse(outputtest[:,ilat,ilon],y_pred_test[:,ilat,ilon])/
+                                     mse(outputtest[:-run,ilat,ilon],outputtest[run:,ilat,ilon]))
+            MSSS_SC[ilat,ilon] = 1-(mse(outputobs_pred[:,ilat,ilon],outputtest[:,ilat,ilon])/
+                                    mse(outputtest[:-run,ilat,ilon],outputtest[run:,ilat,ilon]))
+
+    return outputobs_pred,outputobs_ACC,outputobs_ACC_raw,persistence,MSSS_raw,MSSS_SC
