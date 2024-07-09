@@ -63,7 +63,7 @@ def patternplots_SST(bestpattern,PDOpattern,truedata,preddata,landmask,lon,lat,y
     a2=plt.subplot(2,3,2)
     c=plt.scatter(SC_index_true,SC_index_pred,c=yearvec,cmap=cmr.ember)
     plt.plot(np.arange(-2,3),np.arange(-2,3),color='xkcd:slate grey')
-    plt.text(-2.5,2,"r = %.4f" %(cc_SC))
+    plt.text(-2.5,2,"r = %.2f" %(cc_SC))
     plt.xlabel('true skill component index')
     plt.ylabel('pred skill component index')
     plt.xlim(-3,3)
@@ -97,7 +97,7 @@ def patternplots_SST(bestpattern,PDOpattern,truedata,preddata,landmask,lon,lat,y
     plt.plot(np.arange(-2,3),np.arange(-2,3),color='xkcd:slate grey')
     plt.xlabel('true PDO index')
     plt.ylabel('pred PDO index')
-    plt.text(-2.5,2.1,"r = %.4f" %(cc_PDO))
+    plt.text(-2.5,2.1,"r = %.2f" %(cc_PDO))
     plt.xlim(-3,3)
     plt.ylim(-3,3)
     cbarscat2=plt.colorbar(c)
@@ -117,7 +117,7 @@ def patternplots_SST(bestpattern,PDOpattern,truedata,preddata,landmask,lon,lat,y
 
     plt.tight_layout
 
-    # plt.savefig("figures/" +title+"_patternscatterline.png",dpi=300)
+    plt.savefig("figures/" +title+"_patternscatterline.png",dpi=300)
     
     plt.show()
 
