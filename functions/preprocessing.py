@@ -54,6 +54,24 @@ def pull_data_polydetrend(var,cmodel):
 
     return allensint
 
+def pull_data_polydetrend_forreal(var,cmodel):
+    filelist = glob.glob(path + var + "*" + cmodel + "*2x2*.nc")
+    file = filelist[0]
+    
+    allens = xr.open_dataarray(file,chunks='auto')
+    allens = allens.isel(variant=np.arange(30))
+
+    polys = allens.polyfit(dim="time",deg=3)    
+    coordout = allens.time
+    trend = xr.polyval(coord=coordout, coeffs=polys.polyfit_coefficients)
+        
+    allens_anom = allens-trend
+    allens_anom = allens_anom.groupby("time.year").mean() # annual means
+
+    allensint = allens_anom.squeeze()
+
+    return allensint
+
 def pull_data_monthly(var,cmodel):
     filelist = glob.glob(path + var + "*" + cmodel + "*2x2*.nc")
     file = filelist[0]
@@ -939,6 +957,75 @@ def makeoutputonly_modellist_polydetrend_flexavg(settings,outbounds):
         
     return alloutputdata
 
+def makeinputoutput_imodel_polydetrend(settings,imodel):
+
+    modellist = settings["modellist"]
+    inres = settings["inres"]
+    outres = settings["outres"]
+    leadtime = settings["leadtime"]
+    inbounds = settings["inbounds"]
+    outbounds = settings["outbounds"]
+    run = settings["run"]
+    # n_input = settings["n_input"]
+    
+    startyear = 1851 # start year for LEs
+    year1 = startyear+run # first year with data
+    year2 = 2014 # last year with data
+    
+    cmodel = modellist[imodel]
+
+    print(cmodel)
+    allensin = pull_data_polydetrend_forreal(settings["varin"],cmodel)
+    allensout = pull_data_polydetrend_forreal(settings["varout"],cmodel)
+
+    allensin = allensin.rolling(year=run,center=False).mean() # look BACK running mean
+    allensout = allensout.rolling(year=run,center=False).mean()
+
+    if inres:
+        allensin = regrid(allensin,inres)
+    if outres:
+        allensout = regrid(allensout,outres)
+                
+    if len(inbounds)==0:
+        inputdata = allensin.sel(year=slice(year1,year2-(leadtime+run)))
+    else:
+        if inbounds[2]<0:
+            allensin.coords['lon'] = (allensin.coords['lon'] + 180) % 360 - 180
+            allensin = allensin.sortby(allensin.lon)
+            inputdata = allensin.sel(year=slice(year1,year2-(leadtime+run)),lat=slice(inbounds[0],inbounds[1]),lon=slice(inbounds[2],inbounds[3]))
+        else:
+            inputdata = allensin.sel(year=slice(year1,year2-(leadtime+run)),lat=slice(inbounds[0],inbounds[1]),lon=slice(inbounds[2],inbounds[3]))
+
+    if outbounds[2]<0:
+        allensout.coords['lon'] = (allensout.coords['lon'] + 180) % 360 - 180
+        allensout = allensout.sortby(allensout.lon)
+        outputdata = allensout.sel(year=slice(year1+(leadtime+2*run),year2),lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]))
+    else:
+        outputdata = allensout.sel(year=slice(year1+(leadtime+2*run),year2),lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]))
+    
+    inputdata=inputdata.assign_coords({"variant":np.arange(30)})
+    outputdata=outputdata.assign_coords({"variant":np.arange(30)})
+    
+    inputdata = inputdata.transpose("variant","year","lat","lon")
+    outputdata = outputdata.transpose("variant","year","lat","lon")
+    
+    inputdata = np.squeeze(np.asarray(inputdata))
+    outputdata = np.squeeze(np.asarray(outputdata))
+
+    input1_test = inputdata[:,:-1*run,:,:]
+    input2_test = inputdata[:,run:,:,:]
+
+    shape1 = input1_test.shape
+    
+    inputtest1_flat = input1_test.reshape((shape1[0]*shape1[1],shape1[2],shape1[3]))
+    inputtest2_flat = input2_test.reshape((shape1[0]*shape1[1],shape1[2],shape1[3]))
+    inputtest_flat = np.concatenate((inputtest1_flat[:,:,:,np.newaxis],inputtest2_flat[:,:,:,np.newaxis]),axis=-1)
+    
+    shape2 = outputdata.shape
+    
+    outputtest_flat = outputdata.reshape((shape2[0]*shape2[1],shape2[2],shape2[3]))
+
+    return inputtest_flat,outputtest_flat
 
 
 
