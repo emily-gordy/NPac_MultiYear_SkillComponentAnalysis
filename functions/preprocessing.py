@@ -58,16 +58,16 @@ def pull_data_polydetrend_forreal(var,cmodel):
     filelist = glob.glob(path + var + "*" + cmodel + "*2x2*.nc")
     file = filelist[0]
     
-    allens = xr.open_dataarray(file,chunks='auto')
+    allens = xr.open_dataarray(file,chunks={"lat":50,"lon":50,"year":1,"variant":5})
     allens = allens.isel(variant=np.arange(30))
 
-    polys = allens.polyfit(dim="time",deg=3)    
-    coordout = allens.time
-    trend = xr.polyval(coord=coordout, coeffs=polys.polyfit_coefficients)
-        
-    allens_anom = allens-trend
-    allens_anom = allens_anom.groupby("time.year").mean() # annual means
+    allens = allens.groupby("time.year").mean() # annual means
 
+    polys = allens.polyfit(dim="year",deg=3)    
+    coordout = allens.year
+    trend = xr.polyval(coord=coordout, coeffs=polys.polyfit_coefficients)
+
+    allens_anom = allens-trend
     allensint = allens_anom.squeeze()
 
     return allensint

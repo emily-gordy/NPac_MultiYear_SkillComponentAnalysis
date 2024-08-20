@@ -121,6 +121,104 @@ def patternplots_SST(bestpattern,PDOpattern,truedata,preddata,landmask,lon,lat,y
     
     plt.show()
 
+
+def patternplots_better_SST(bestpattern,PDOpattern,truedata,preddata,landmask,lon,lat,yearvec,title,outputstd):
+    
+    centre = np.asarray((lon[0]+lon[-1])/2)
+    projection = ccrs.EqualEarth(central_longitude=centre)
+    transform = ccrs.PlateCarree()
+    
+    continents = "gray"
+    
+    SC_index_true = allthelinalg.index_timeseries(truedata,bestpattern,landmask)
+    SC_index_pred = allthelinalg.index_timeseries(preddata,bestpattern,landmask)
+    
+    PDOindex_true = allthelinalg.index_timeseries(truedata,PDOpattern,landmask)
+    PDOindex_pred = allthelinalg.index_timeseries(preddata,PDOpattern,landmask)
+    
+    bestpatternplot = np.mean(truedata*SC_index_true[:,np.newaxis,np.newaxis],axis=0)
+    PDOpatternplot = np.mean(truedata*PDOindex_true[:,np.newaxis,np.newaxis],axis=0)
+    
+    bestpatternplot = bestpatternplot*np.squeeze(outputstd)
+    PDOpatternplot = PDOpatternplot*np.squeeze(outputstd)
+    
+    cc_SC,_ = pearsonr(SC_index_true,SC_index_pred)
+    cc_PDO,_ = pearsonr(PDOindex_true,PDOindex_pred)
+    
+    plt.figure(figsize=(13,8))
+    
+    a1=plt.subplot(2,2,1,projection=projection)
+    a1.pcolormesh(lon,lat,bestpatternplot,vmin=-0.6,vmax=0.6,cmap="cmr.fusion_r",transform=transform)
+    c1=a1.contourf(lon,lat,bestpatternplot,np.arange(-0.6,0.65,0.05),cmap="cmr.fusion_r",transform=transform,extend='both')
+    a1.add_feature(cfeature.NaturalEarthFeature('physical', 'land', '50m', edgecolor='face', facecolor=continents))
+    cbar1=plt.colorbar(c1,location='bottom')
+    cbar1.ax.set_xlabel(r'SST ($^{\circ}$C)')
+    cbar1.ax.set_xticks(np.arange(-0.6,0.8,0.2))
+    plt.title(title + ' first skill component pattern')
+    plt.text(0.02,1.18,"a.",transform=a1.transAxes,fontsize=18,weight='bold')
+    
+    # a2=plt.subplot(2,3,2)
+    # c=plt.scatter(SC_index_true,SC_index_pred,c=yearvec,cmap=cmr.ember)
+    # plt.plot(np.arange(-2,3),np.arange(-2,3),color='xkcd:slate grey')
+
+    # plt.xlabel('true skill component index')
+    # plt.ylabel('pred skill component index')
+    # plt.xlim(-3,3)
+    # plt.ylim(-3,3)
+    # cbarscat1=plt.colorbar(c)
+    # cbarscat1.ax.set_ylabel('year')
+    # plt.text(0.02,0.92,"b.",transform=a2.transAxes,fontsize=18,weight='bold')
+    
+    a3=plt.subplot(2,2,2)
+    plt.plot(yearvec,SC_index_true,color='xkcd:slate grey',label='true')
+    plt.plot(yearvec,SC_index_pred,color='xkcd:teal',label='pred')
+    plt.ylim(-3,3)
+    plt.xlim(yearvec[0],yearvec[-1])
+    plt.legend()
+    plt.ylabel('skill component index')
+    plt.xlabel('year')
+    plt.text(1990,2.5,"r = %.2f" %(cc_SC),fontsize=14)
+    plt.text(0.02,0.92,"b.",transform=a3.transAxes,fontsize=18,weight='bold')
+
+    a4=plt.subplot(2,2,3,projection=projection)
+    a4.pcolormesh(lon,lat,PDOpatternplot,vmin=-0.6,vmax=0.6,cmap="cmr.fusion_r",transform=transform)
+    c4=a4.contourf(lon,lat,PDOpatternplot,np.arange(-0.6,0.65,0.05),cmap="cmr.fusion_r",transform=transform,extend='both')
+    a4.add_feature(cfeature.NaturalEarthFeature('physical', 'land', '50m', edgecolor='face', facecolor=continents))
+    cbar4=plt.colorbar(c4,location='bottom')
+    cbar4.ax.set_xlabel(r'SST ($^{\circ}$C)')
+    cbar4.ax.set_xticks(np.arange(-0.6,0.8,0.2))
+    plt.title(title + ' PDO pattern')
+    plt.text(0.02,1.18,"c.",transform=a4.transAxes,fontsize=18,weight='bold')
+    
+    # a5=plt.subplot(2,3,5)
+    # c=plt.scatter(PDOindex_true,PDOindex_pred,c=yearvec,cmap=cmr.ember)
+    # plt.plot(np.arange(-2,3),np.arange(-2,3),color='xkcd:slate grey')
+    # plt.xlabel('true PDO index')
+    # plt.ylabel('pred PDO index')
+
+    # plt.xlim(-3,3)
+    # plt.ylim(-3,3)
+    # cbarscat2=plt.colorbar(c)
+    # cbarscat2.ax.set_ylabel('year')  
+    
+    a6=plt.subplot(2,2,4)
+    plt.plot(yearvec,PDOindex_true,color='xkcd:slate grey',label='true')
+    plt.plot(yearvec,PDOindex_pred,color='xkcd:teal',label='pred')
+    # plt.legend()
+    plt.ylabel('PDO index')
+    plt.xlabel('year')
+    plt.ylim(-3,3)
+    plt.xlim(yearvec[0],yearvec[-1])
+    plt.text(1990,2.5,"r = %.2f" %(cc_PDO),fontsize=14)
+    plt.text(0.02,0.92,"d.",transform=a6.transAxes,fontsize=18,weight='bold')    
+    # plt.suptitle(title,fontsize=30)
+
+    plt.tight_layout
+
+    plt.savefig("figures/" +title+"_patternline.png",dpi=300)
+    
+    plt.show()
+
 def patternplots_SST_predrange(bestpattern,PDOpattern,truedata,preddata,predrange,landmask,lon,lat,yearvec,title,outputstd):
     
     centre = np.asarray((lon[0]+lon[-1])/2)
@@ -396,14 +494,6 @@ def prettyviolinplot_multiobs(modeldata,obsval,modellist,testvariants,ylabel,sou
     nmodels = len(modellist)
     plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.tab10(np.linspace(0,1,nmodels)))
     
-    # lowerbound = np.min(modeldata,axis=1)
-    # upperbound = np.max(modeldata,axis=1)
-    
-    # lowers = np.mean(modeldata,axis=1)-lowerbound
-    # uppers = upperbound-np.mean(modeldata,axis=1)
-    
-    # errs = np.concatenate((lowers[np.newaxis,:],uppers[np.newaxis,:]),axis=0)
-
     colors = ["xkcd:dark teal",
              "xkcd:maroon"]
 
@@ -416,6 +506,55 @@ def prettyviolinplot_multiobs(modeldata,obsval,modellist,testvariants,ylabel,sou
         plt.scatter(np.arange(nmodels),obs,marker=markers[iobs],color=colors[iobs],zorder=nmodels+1,label=source[iobs])
 
     plt.legend(loc='lower center')
+    
+    plt.xticks(np.arange(nmodels),labels=modellist,rotation=60)
+    plt.ylabel(ylabel)
+    plt.ylim(-0.2,1)
+    
+    plt.tight_layout()
+    if savestr:
+        plt.savefig(savestr,dpi=300)
+    plt.show()
+
+def prettyviolinplot_multiobs_ranks(modeldata,obsval,modellist,ylabel,source,savestr):
+
+    nmodels = len(modellist)
+    corrconcat = np.concatenate((modeldata,np.transpose(obsval)),axis=1)
+    corrconcat.shape
+
+    scores = []
+
+    for imodel in range(nmodels):
+
+        mat1 = modeldata[imodel]
+        mat2 = obsval[:,imodel]
+
+        print(mat2)
+
+        matfull = np.concatenate((mat1,mat2))
+
+        score1 = percentileofscore(matfull,mat2[0])
+        score2 = percentileofscore(matfull,mat2[1])
+
+        scores.append([score1,score2])
+
+    scores = np.asarray(scores)
+
+    plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.tab10(np.linspace(0,1,nmodels)))
+    
+    colors = ["xkcd:dark teal",
+             "xkcd:maroon"]
+
+    markers = ["x","+"]
+    
+    plt.figure(figsize=(8,4))
+    for imodel in range(len(modellist)):
+        plt.violinplot(modeldata[imodel,:],positions=[imodel],showmedians=True)
+    for iobs,obs in enumerate(obsval):
+        plt.scatter(np.arange(nmodels),obs,marker=markers[iobs],color=colors[iobs],zorder=nmodels+1,label=source[iobs])
+        # for imodel in range(nmodels):
+        #     plt.text(imodel-0.25,0.81+iobs/10,str(int(scores[imodel,iobs]))+"th",color=colors[iobs])
+    plt.legend(loc='lower left',framealpha = 0.2)
     
     plt.xticks(np.arange(nmodels),labels=modellist,rotation=60)
     plt.ylabel(ylabel)
@@ -595,3 +734,42 @@ def varexplained(y_pred,output,pattern,griddeddata,landmask,latvec,lonvec):
 
     plt.show()           
 
+def prettyviolinplot_supp_summary(modeldata,obs1,obs2,modellist,ylabel,savestr):
+    
+    nmodels = len(modellist)
+    plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.tab10(np.linspace(0,1,nmodels)))
+
+    nmodels = len(modellist)
+    plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.tab10(np.linspace(0,1,nmodels)))
+    
+    colors = ["xkcd:dark teal",
+             "xkcd:maroon"]
+
+    markers = ["x","+"]
+    
+    plt.figure(figsize=(8,4))
+    for imodel in range(len(modellist)):
+        plt.violinplot(modeldata[:,imodel,:].flatten(),positions=[imodel])
+    # for iobs,obs in enumerate(obs1):
+    #     plt.hlines(obs,0,len(modellist),color=colors[0],linewidth=0.4)
+    # for iobs,obs in enumerate(obs2):
+    #     plt.hlines(obs,0,len(modellist),color=colors[1],linewidth=0.4)
+    minobs1 = np.min(obs1)
+    minobs2 = np.min(obs2)
+    maxobs1 = np.max(obs1)
+    maxobs2 = np.max(obs2)
+    plt.fill_between(np.arange(-0.5,len(modellist)+0.5),minobs1,maxobs1,color=colors[0],alpha=0.2,label="ERSST range")
+    plt.fill_between(np.arange(-0.5,len(modellist)+0.5),minobs2,maxobs2,color=colors[1],alpha=0.2,label="HadISST range")
+
+    plt.legend(loc='lower left',framealpha=0.2)
+    
+    plt.xticks(np.arange(nmodels),labels=modellist,rotation=60)
+    plt.ylabel(ylabel)
+    plt.ylim(-0.25,1)
+    plt.yticks(np.arange(-0.2,1.2,0.2))
+    plt.xlim(-0.5,len(modellist)-0.5)
+    
+    plt.tight_layout()
+    if savestr:
+        plt.savefig(savestr,dpi=300)
+    plt.show()
