@@ -708,7 +708,7 @@ def makeoutputonly_obs(settings,source,outbounds):
     if "SST" in source:
         outputdata = obsout.sel(lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]),year=slice(year1+leadtime+2*run,year2))
     else:
-        # hard code ERA5 bounds
+        # hard code obs bounds
         outputdata = obsout.sel(lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]),year=slice(1944,year2))
 
     return outputdata
@@ -785,7 +785,7 @@ def makeoutputonly_obs_flexavg(settings,source,outbounds,outres):
 
     return outputdata
 
-def makeoutputonly_modellist_emeandetrend(settings,outbounds):
+def makeoutputonly_modellist_emeandetrend(settings,outbounds,varsel=None,validation=None):
 
     alloutputdata = []
     
@@ -795,18 +795,31 @@ def makeoutputonly_modellist_emeandetrend(settings,outbounds):
 
     run = settings["run"]
     # n_input = settings["n_input"]
+
+    if varsel:
+        varchoose = varsel
+    else:
+        varchoose = settings["varout"]
+
+    print(varsel)
+
+    if validation:
+        variants = np.arange(15,23)
+    else:
+        variants = np.arange(23,30)
     
     startyear = 1851 # start year for LEs
     year1 = startyear+run # first year with data
     year2 = 2014 # last year with data
 
-    alloutputdata = np.empty((9,7,149,45,90))
-    
+    alloutputdata = np.empty((9,len(variants),149,45,90))
+    alloutputdata = []
+
     for imodel,cmodel in enumerate(modellist):
         t1 = time.time()
         print(cmodel)
-        allensout = pull_data(settings["varout"],cmodel)
-        allensout = allensout[23:30,:,:,:]
+        allensout = pull_data(varchoose,cmodel)
+        allensout = allensout[variants,:,:,:]
         allensout = allensout.rolling(year=run,center=False).mean()
 
         if outres:
@@ -819,8 +832,9 @@ def makeoutputonly_modellist_emeandetrend(settings,outbounds):
         else:
             outputdata = allensout.sel(year=slice(year1+(leadtime+2*run),year2),lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]))
 
-        alloutputdata[imodel] = np.squeeze(np.asarray(outputdata))
-        
+        alloutputdata_loop = np.squeeze(np.asarray(outputdata))
+        alloutputdata.append(alloutputdata_loop)
+
         t2 = time.time()
         
         print("elapsed time = %f" %(t2-t1))

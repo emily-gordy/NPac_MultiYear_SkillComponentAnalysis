@@ -341,9 +341,13 @@ def plotpattern_SST(pattern,lon,lat,outputstd,savestr):
 
     lbound = -0.3
     ubound = 0.3
+
+    # lbound = -0.6
+    # ubound = 0.6
     
     cmapdiff = cmr.fusion_r
     boundsdiff = np.arange(lbound,ubound+0.02,0.02)
+    # boundsdiff = np.arange(lbound,ubound+0.05,0.05)
     normdiff = colors.BoundaryNorm(boundaries=boundsdiff, ncolors=cmapdiff.N)
     
     pattern = np.squeeze(pattern*outputstd)
@@ -358,7 +362,7 @@ def plotpattern_SST(pattern,lon,lat,outputstd,savestr):
     cbar=plt.colorbar(c1)
     cbar.ax.set_ylabel(r'SST ($^{\circ}$C)')
     cbar.ax.set_yticks(np.arange(lbound,ubound+0.1,0.1))
-    
+    # cbar.ax.set_yticks(np.arange(lbound,ubound+0.2,0.2))   
     plt.tight_layout()
     if savestr:
         plt.savefig(savestr,dpi=300)
