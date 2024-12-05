@@ -85,6 +85,23 @@ def pull_data_polydetrend_forreal(var,cmodel):
 
     return allensint
 
+def pull_data_borealwinter(var,cmodel):
+    filelist = glob.glob(path + var + "*" + cmodel + "*2x2*.nc")
+    file = filelist[0]
+    
+    allens = xr.open_dataarray(file,chunks='auto')
+    allens = allens.isel(variant=np.arange(30))
+
+    allens_seasonal = allens.rolling(time=3).mean()
+    allens_djf = allens_seasonal[:,1::12]
+    
+    ensmean = allens_djf.mean(dim="variant")
+    allensint = allens_djf-ensmean
+    
+    allensint = allensint.squeeze()
+
+    return allensint
+
 def pull_data_monthly(var,cmodel):
     filelist = glob.glob(path + var + "*" + cmodel + "*2x2*.nc")
     file = filelist[0]
@@ -98,6 +115,7 @@ def pull_data_monthly(var,cmodel):
     allensint = allensint.squeeze()
 
     return allensint
+
 
 def pull_data_obs(var,source):
     
@@ -138,6 +156,38 @@ def pull_data_obs(var,source):
 
     polys = da.polyfit(dim="year",deg=3)    
     coordout = da.year
+    trend = xr.polyval(coord=coordout, coeffs=polys.polyfit_coefficients)
+    
+    da_anom = da-trend
+
+    # da_anom = da_anom.groupby("time.year").mean() # annual means
+
+    return da_anom
+
+def pull_data_obs_borealwinter(var,source):
+    
+    if source == "ERA5":
+
+        filelist = glob.glob(path + "*" + source + "*2x2*.nc")
+        file = filelist[0]
+        print(file)
+        
+        ds = xr.open_dataset(file)
+        da = ds["t2m"]
+    
+    elif source == "HadCRUT":
+        filelist = glob.glob(path + "*" + source + "*.nc")
+        file = filelist[0]
+        print(file)
+        
+        ds = xr.open_dataset(file)
+        da = ds["tas_mean"]
+
+    da = da.rolling(time=3).mean()
+    da = da[1::12]
+
+    polys = da.polyfit(dim="time",deg=3)    
+    coordout = da.time
     trend = xr.polyval(coord=coordout, coeffs=polys.polyfit_coefficients)
     
     da_anom = da-trend
@@ -369,20 +419,20 @@ def concatobs(inputobs,outputobs,outputstd,run):
 
     return inputobs,outputobs
 
-def concatobs_torch(inputobs,outputobs,outputstd,run):
+# def concatobs_torch(inputobs,outputobs,outputstd,run):
     
-    inputobs = np.asarray(inputobs)
-    outputobs = np.asarray(outputobs)
+#     inputobs = np.asarray(inputobs)
+#     outputobs = np.asarray(outputobs)
     
-    inputobs[np.isnan(inputobs)] = 0
-    inputobs1 = inputobs[:-1*run,:,:]
-    inputobs2 = inputobs[run:,:,:]
-    inputobs = np.concatenate((inputobs1[:,np.newaxis,:,:],inputobs2[:,np.newaxis,:,:]),axis=1)
+#     inputobs[np.isnan(inputobs)] = 0
+#     inputobs1 = inputobs[:-1*run,:,:]
+#     inputobs2 = inputobs[run:,:,:]
+#     inputobs = np.concatenate((inputobs1[:,np.newaxis,:,:],inputobs2[:,np.newaxis,:,:]),axis=1)
     
-    outputobs = outputobs/outputstd
-    outputobs[np.isnan(outputobs)] = 0
+#     outputobs = outputobs/outputstd
+#     outputobs[np.isnan(outputobs)] = 0
 
-    return inputobs,outputobs
+#     return inputobs,outputobs
 
 def make_inputoutput_modellist(settings):
 
@@ -1186,3 +1236,90 @@ def grab_obs_detrend(settings):
     HadISSTdetrend = HadISSTdetrend.sel(year=slice(1870,year2),lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]))
 
     return ERSSTdetrend,HadISSTdetrend
+
+
+def makeoutputonly_borealwinter_modellist_emeandetrend(settings,outbounds,varsel=None,validation=None):
+
+    alloutputdata = []
+    
+    modellist = settings["modellist"]
+    outres = settings["outres"]
+    leadtime = settings["leadtime"]
+
+    run = settings["run"]
+    # n_input = settings["n_input"]
+
+    if varsel:
+        varchoose = varsel
+    else:
+        varchoose = settings["varout"]
+
+    print(varsel)
+
+    if validation:
+        variants = np.arange(15,23)
+    else:
+        variants = np.arange(23,30)
+    
+    startyear = 1851 # start year for LEs
+    year1 = startyear+run # first year with data
+    year2 = 2014 # last year with data
+
+    alloutputdata = np.empty((9,len(variants),149,45,90))
+    alloutputdata = []
+
+    for imodel,cmodel in enumerate(modellist):
+        t1 = time.time()
+        print(cmodel)
+        allensout = pull_data_borealwinter(varchoose,cmodel)
+        allensout = allensout[variants,:,:,:]
+        allensout = allensout.rolling(time=run,center=False).mean()
+
+        if outres:
+            allensout = regrid(allensout,outres)
+                    
+        if outbounds[2]<0:
+            allensout.coords['lon'] = (allensout.coords['lon'] + 180) % 360 - 180
+            allensout = allensout.sortby(allensout.lon)
+            outputdata = allensout.sel(time=slice(str(year1+(leadtime+2*run)),str(year2)),lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]))
+        else:
+            outputdata = allensout.sel(time=slice(str(year1+(leadtime+2*run)),str(year2)),lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]))
+
+        alloutputdata_loop = np.squeeze(np.asarray(outputdata))
+        alloutputdata.append(alloutputdata_loop)
+
+        t2 = time.time()
+        
+        print("elapsed time = %f" %(t2-t1))
+    
+    return alloutputdata
+
+def makeoutputonly_borealwinter_obs(settings,source,outbounds):
+
+    # make data corresponding to CNN output for specified variable and region
+    
+    outres = settings["outres"]
+    leadtime = settings["leadtime"]
+    run = settings["run"]    
+    
+    # hard code year range for obs
+    if source == "ERSST":
+        year1 = 1854+settings["run"]
+    elif source == "HadISST":
+        year1 = 1870+settings["run"]
+    year2 = 2023
+    
+    obsout = pull_data_obs_borealwinter(settings["varout"],source)
+    
+    obsout = obsout.rolling(time=run,center=False).mean()
+
+    if outres:
+        obsout = regrid(obsout,outres)
+
+    if outbounds[2]<0:
+        obsout.coords['lon'] = (obsout.coords['lon'] + 180) % 360 - 180
+        obsout = obsout.sortby(obsout.lon)
+
+    outputdata = obsout.sel(lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]),time=slice(str(1950),str(year2)))
+
+    return outputdata

@@ -75,8 +75,10 @@ def some_simple_models(y_pred_test,outputtest,trainingval,bestpattern,landmask,l
 
     outputobs_pred = np.empty((len(SCtimeseries_pred),len(lat),len(lon)))
     outputobs_ACC = np.empty((len(lat),len(lon)))
+    outputobs_p = np.empty((len(lat),len(lon)))
 
     outputobs_ACC_raw = np.empty((len(lat),len(lon)))
+    outputobs_p_raw = np.empty((len(lat),len(lon)))
     persistence = np.empty((len(lat),len(lon)))
 
     MSSS_raw = np.empty((len(lat),len(lon)))
@@ -88,8 +90,8 @@ def some_simple_models(y_pred_test,outputtest,trainingval,bestpattern,landmask,l
             a_SST[ilat,ilon],b_SST[ilat,ilon],_,_,_ = linregress(SCtimeseries_training,trainingval[:,ilat,ilon])
 
             outputobs_pred[:,ilat,ilon] = a_SST[ilat,ilon]*SCtimeseries_pred + b_SST[ilat,ilon]
-            outputobs_ACC[ilat,ilon],_ = pearsonr(outputobs_pred[:,ilat,ilon],outputtest[:,ilat,ilon])
-            outputobs_ACC_raw[ilat,ilon],_ = pearsonr(outputtest[:,ilat,ilon],y_pred_test[:,ilat,ilon])
+            outputobs_ACC[ilat,ilon],outputobs_p[ilat,ilon] = pearsonr(outputobs_pred[:,ilat,ilon],outputtest[:,ilat,ilon])
+            outputobs_ACC_raw[ilat,ilon],outputobs_p_raw[ilat,ilon] = pearsonr(outputtest[:,ilat,ilon],y_pred_test[:,ilat,ilon])
             persistence[ilat,ilon],_ = pearsonr(outputtest[:-run,ilat,ilon],outputtest[run:,ilat,ilon])
 
             MSSS_raw[ilat,ilon] = 1-(mse(outputtest[:,ilat,ilon],y_pred_test[:,ilat,ilon])/
@@ -97,7 +99,7 @@ def some_simple_models(y_pred_test,outputtest,trainingval,bestpattern,landmask,l
             MSSS_SC[ilat,ilon] = 1-(mse(outputobs_pred[:,ilat,ilon],outputtest[:,ilat,ilon])/
                                     mse(outputtest[:-run,ilat,ilon],outputtest[run:,ilat,ilon]))
 
-    return outputobs_pred,outputobs_ACC,outputobs_ACC_raw,persistence,MSSS_raw,MSSS_SC
+    return outputobs_pred,outputobs_ACC,outputobs_ACC_raw,outputobs_p,outputobs_p_raw,persistence,MSSS_raw,MSSS_SC
 
 def some_simple_models_tas(y_pred_test,outputTAS,trainingSST,trainingTAS,bestpattern,landmask,lat,lon,run):
 
@@ -109,6 +111,7 @@ def some_simple_models_tas(y_pred_test,outputTAS,trainingSST,trainingTAS,bestpat
 
     outputobs_pred = np.empty((len(SCtimeseries_pred),len(lat),len(lon)))
     outputobs_ACC = np.empty((len(lat),len(lon)))
+    outputobs_p = np.empty((len(lat),len(lon)))
 
     MSSS_SC = np.empty((len(lat),len(lon)))
 
@@ -120,11 +123,11 @@ def some_simple_models_tas(y_pred_test,outputTAS,trainingSST,trainingTAS,bestpat
             a_TAS[ilat,ilon],b_TAS[ilat,ilon],_,_,_ = linregress(SCtimeseries_training,trainingTAS[:,ilat,ilon])
 
             outputobs_pred[:,ilat,ilon] = a_TAS[ilat,ilon]*SCtimeseries_pred + b_TAS[ilat,ilon]
-            outputobs_ACC[ilat,ilon],_ = pearsonr(outputobs_pred[:,ilat,ilon],outputTAS[:,ilat,ilon])
+            outputobs_ACC[ilat,ilon],outputobs_p[ilat,ilon] = pearsonr(outputobs_pred[:,ilat,ilon],outputTAS[:,ilat,ilon])
             # outputobs_ACC_raw[ilat,ilon],_ = pearsonr(outputTAS[:,ilat,ilon],y_pred_test[:,ilat,ilon])
             persistence[ilat,ilon],_ = pearsonr(outputTAS[:-run,ilat,ilon],outputTAS[run:,ilat,ilon])
 
             MSSS_SC[ilat,ilon] = 1-(mse(outputobs_pred[:,ilat,ilon],outputTAS[:,ilat,ilon])/
                                     mse(outputTAS[:-run,ilat,ilon],outputTAS[run:,ilat,ilon]))
 
-    return outputobs_pred,outputobs_ACC,MSSS_SC,persistence,a_TAS
+    return outputobs_pred,outputobs_ACC,outputobs_p,MSSS_SC,persistence,a_TAS

@@ -339,11 +339,11 @@ def plotpattern(pattern,lon,lat):
 
 def plotpattern_SST(pattern,lon,lat,outputstd,savestr):
 
-    lbound = -0.3
-    ubound = 0.3
+    # lbound = -0.3
+    # ubound = 0.3
 
-    # lbound = -0.6
-    # ubound = 0.6
+    lbound = -0.6
+    ubound = 0.6
     
     cmapdiff = cmr.fusion_r
     boundsdiff = np.arange(lbound,ubound+0.02,0.02)
