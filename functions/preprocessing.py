@@ -796,7 +796,7 @@ def makeoutputonly_obs(settings,source,outbounds):
         outputdata = obsout.sel(lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]),year=slice(year1+leadtime+2*run,year2))
     else:
         # hard code obs bounds
-        outputdata = obsout.sel(lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]),year=slice(1944,year2))
+        outputdata = obsout.sel(lat=slice(outbounds[0],outbounds[1]),lon=slice(outbounds[2],outbounds[3]),year=slice(1950,year2))
 
     return outputdata
 
