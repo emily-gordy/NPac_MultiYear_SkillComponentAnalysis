@@ -1,6 +1,6 @@
-## Welcome to the paper code for what is hopefully another excellent journal submission
+## Code for Gordon and Diffenbaugh 2025 
 
-This repository contains the code for the paper "Identifying a pattern of predictable multi-year North Pacific SST variability in historical observations" (working title). 
+This repository contains the code for the paper "Identifying a pattern of predictable multi-year North Pacific SST variability in historical observations" by Gordon and Diffenbaugh. 
 
 ## Python Environment
 One day, I will learn how to make a yml file, but today is not that day so first of all some environment requirements: All code is written in Python 3.9. On top of the basic packages (numpy, matplotlib, scipy), this project uses 
