@@ -446,7 +446,7 @@ def prettyscatterplot(modeldata,obsval,modellist,testvariants,ylabel,obslabels,s
         plt.hlines(obsval[iline],-0.4,nmodels-0.6,color=colorlist[iline],label=obslabels[iline])
     plt.xticks(np.arange(nmodels),labels=modellist,rotation=60)
     plt.ylabel(ylabel)
-    plt.legend(loc='lower left')
+    plt.legend(loc='lower right')
     plt.ylim(-0.2,1)
     plt.xlim(-0.5,nmodels-0.5)
     
@@ -483,17 +483,17 @@ def prettyscatterplot_multiobs(modeldata,obsval,modellist,testvariants,ylabel,so
         plt.scatter(np.arange(nmodels),obs,marker=markers[iobs],color=colors[iobs],zorder=nmodels+1,label=source[iobs])
 
     plt.legend()
-    
+    plt.xlim(-0.6,8.6)
     plt.xticks(np.arange(nmodels),labels=modellist,rotation=60)
     plt.ylabel(ylabel)
-    plt.ylim(-0.5,1)
+    plt.ylim(-0.2,1)
     
     plt.tight_layout()
     if savestr:
         plt.savefig(savestr,dpi=300)
     plt.show()
 
-def prettyviolinplot_multiobs(modeldata,obsval,modellist,testvariants,ylabel,source,savestr):
+def prettyviolinplot_multiobs(modeldata,obsval,modellist,ylabel,source,savestr):
 
     nmodels = len(modellist)
     plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.tab10(np.linspace(0,1,nmodels)))
@@ -509,11 +509,13 @@ def prettyviolinplot_multiobs(modeldata,obsval,modellist,testvariants,ylabel,sou
     for iobs,obs in enumerate(obsval):
         plt.scatter(np.arange(nmodels),obs,marker=markers[iobs],color=colors[iobs],zorder=nmodels+1,label=source[iobs])
 
-    plt.legend(loc='lower center')
+    # plt.legend(loc='upper right')
     
     plt.xticks(np.arange(nmodels),labels=modellist,rotation=60)
     plt.ylabel(ylabel)
     plt.ylim(-0.2,1)
+
+    plt.xlim(-0.6,8.6)
     
     plt.tight_layout()
     if savestr:

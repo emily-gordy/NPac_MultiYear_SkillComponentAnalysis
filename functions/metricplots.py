@@ -220,6 +220,7 @@ def mapps(y_pred,y_true,nvars,lon,lat,centre,title,settings):
     a1 = plt.subplot(2, 2, 1, projection=projection)
     c1 = a1.pcolormesh(lon, lat, mseplot, transform=transform,
     cmap=cmr.fall_r, vmin=0.2, vmax=1.2)
+    a1.add_feature(cfeature.NaturalEarthFeature('physical', 'land', '50m', edgecolor='face', facecolor="gray"))
     a1.coastlines(color='gray')
     plt.colorbar(c1)
     plt.title('MSE')
@@ -227,6 +228,7 @@ def mapps(y_pred,y_true,nvars,lon,lat,centre,title,settings):
     a2 = plt.subplot(2, 2, 2, projection=projection)
     c2 = a2.pcolormesh(lon, lat, pearsonrplot,
     transform=transform, cmap='RdBu_r', norm=norm)
+    a2.add_feature(cfeature.NaturalEarthFeature('physical', 'land', '50m', edgecolor='face', facecolor="gray"))
     a2.coastlines(color='gray')
     cbar2=plt.colorbar(c2,ticks=np.arange(-1,1.25,0.25))
     plt.title('CNN Correlation Coefficient')
@@ -234,6 +236,7 @@ def mapps(y_pred,y_true,nvars,lon,lat,centre,title,settings):
     a5 = plt.subplot(2, 2, 3, projection=projection)
     c5 = a5.pcolormesh(lon, lat, persistence_MSE, transform=transform,
     cmap=cmr.fall_r, vmin=0.2, vmax=1.2)
+    a5.add_feature(cfeature.NaturalEarthFeature('physical', 'land', '50m', edgecolor='face', facecolor="gray"))
     a5.coastlines(color='gray')
     plt.colorbar(c5)
     plt.title('persistence MSE')
@@ -242,6 +245,7 @@ def mapps(y_pred,y_true,nvars,lon,lat,centre,title,settings):
     c6 = a6.pcolormesh(lon, lat, autocorrelation, transform=transform,
     cmap='RdBu_r', norm=norm)
     a6.coastlines(color='gray')
+    a6.add_feature(cfeature.NaturalEarthFeature('physical', 'land', '50m', edgecolor='face', facecolor="gray"))
     plt.colorbar(c6,ticks=np.arange(-1,1.25,0.25))
     plt.title('Persistence Correlation Coefficient')
     
