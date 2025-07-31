@@ -482,7 +482,7 @@ def prettyscatterplot_multiobs(modeldata,obsval,modellist,testvariants,ylabel,so
     for iobs,obs in enumerate(obsval):
         plt.scatter(np.arange(nmodels),obs,marker=markers[iobs],color=colors[iobs],zorder=nmodels+1,label=source[iobs])
 
-    plt.legend()
+    plt.legend(loc='lower right')
     plt.xlim(-0.6,8.6)
     plt.xticks(np.arange(nmodels),labels=modellist,rotation=60)
     plt.ylabel(ylabel)
